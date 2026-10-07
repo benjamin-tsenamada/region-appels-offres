@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Appels d'offres - Région Atsimo-Andrefana</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8fafc; color: #1e293b; margin: 0; }
+
+        .topbar {
+            background-color: #0f172a !important;
+            padding: 16px 0 !important;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+        }
+        .topbar .brand {
+            color: #ffffff !important;
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            margin: 0;
+        }
+        .topbar .btn-top {
+            background-color: #1e3a5f !important;
+            color: #ffffff !important;
+            border: 1px solid #334155 !important;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 6px 14px;
+            margin-left: 8px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .topbar .btn-top:hover { background-color: #334155 !important; color: #ffffff !important; }
+
+        .card-main {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+            background: #ffffff;
+        }
+        .card-main h5 {
+            color: #1e3a5f;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 16px;
+        }
+
+        .form-label { font-weight: 500; color: #475569; }
+        .form-control, .form-select { border-color: #cbd5e1; }
+        .form-control:focus, .form-select:focus {
+            border-color: #1e3a5f;
+            box-shadow: 0 0 0 0.15rem rgba(30, 58, 95, 0.15);
+        }
+
+        .btn-primary {
+            background-color: #1e3a5f !important;
+            border-color: #1e3a5f !important;
+        }
+        .btn-primary:hover {
+            background-color: #0f172a !important;
+            border-color: #0f172a !important;
+        }
+
+        .table thead th {
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .table tbody tr:hover { background-color: #f8fafc; }
+        .badge-secteur { font-size: 0.75rem; font-weight: 500; padding: 5px 9px; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="container d-flex justify-content-between align-items-center">
+        <p class="brand">Région Atsimo-Andrefana — Appels d'offres</p>
+        <div>
+            <a href="{% url 'appels_offres:dashboard' %}" class="btn-top">📊 Tableau de bord</a>
+            <a href="{% url 'appels_offres:carte' %}" class="btn-top">🗺️ Carte</a>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+
+    <div class="card-main p-4 mb-4">
+        <h5>🔍 Rechercher un appel d'offres</h5>
+        <form method="get" class="row g-2">
+
+            <div class="col-md-4">
+                <label class="form-label small">Mot-clé</label>
+                <input type="text" name="q" class="form-control" placeholder="Titre, description, autorité..."
+                       value="{{ filtres.q }}">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small">Secteur</label>
+                <select name="secteur" class="form-select">
+                    <option value="">Tous</option>
+                    {% for s in secteurs %}
+                        <option value="{{ s.id }}" {% if filtres.secteur == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small">District</label>
+                <select name="district" class="form-select">
+                    <option value="">Tous</option>
+                    {% for d in districts %}
+                        <option value="{{ d.id }}" {% if filtres.district == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small">Statut</label>
+                <select name="statut" class="form-select">
+                    <option value="">Tous</option>
+                    {% for code, label in statuts %}
+                        <option value="{{ code }}" {% if filtres.statut == code %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small">Échéance avant le</label>
+                <input type="date" name="date_limite_avant" class="form-control"
+                       value="{{ filtres.date_limite_avant }}">
+            </div>
+
+            <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-primary">Filtrer</button>
+                <a href="{% url 'appels_offres:liste_appels' %}" class="btn btn-outline-secondary">Réinitialiser</a>
+                <span class="text-muted ms-3">{{ total_resultats }} résultat(s)</span>
+            </div>
+
+        </form>
+    </div>
+
+    <div class="card-main p-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Intitulé</th>
+                        <th>Secteur</th>
+                        <th>District</th>
+                        <th>Publication</th>
+                        <th>Échéance</th>
+                        <th>Statut</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ao in page_obj %}
+                    <tr>
+                        <td>
+                            <strong>{{ ao.titre }}</strong><br>
+                            <small class="text-muted">{{ ao.autorite_contractante }}</small>
+                        </td>
+                        <td>
+                            {% if ao.secteur %}
+                                <span class="badge bg-info text-dark badge-secteur">{{ ao.secteur.nom }}</span>
+                            {% else %}<span class="text-muted">-</span>{% endif %}
+                        </td>
+                        <td>{{ ao.district.nom|default:"-" }}</td>
+                        <td>{{ ao.date_publication|date:"d/m/Y" }}</td>
+                        <td>{{ ao.date_limite|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if ao.statut == "publie" %}<span class="badge bg-primary">Publié</span>
+                            {% elif ao.statut == "en_cours" %}<span class="badge bg-warning text-dark">En cours</span>
+                            {% elif ao.statut == "attribue" %}<span class="badge bg-success">Attribué</span>
+                            {% else %}<span class="badge bg-secondary">Infructueux</span>{% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'appels_offres:detail_appel' ao.pk %}" class="btn btn-sm btn-outline-primary">Voir le détail</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">Aucun appel d'offres ne correspond à votre recherche.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for k,v in filtres.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}">Précédent</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link" style="background-color:#1e3a5f;border-color:#1e3a5f;">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% for k,v in filtres.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}" style="color:#1e3a5f;">Suivant</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+
+</div>
+
+</body>
+</html>

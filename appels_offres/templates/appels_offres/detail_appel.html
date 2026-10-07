@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ appel.titre }} - Région Atsimo-Andrefana</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8fafc; color: #1e293b; margin: 0; }
+
+        .topbar {
+            background-color: #0f172a !important;
+            padding: 16px 0 !important;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+        }
+        .topbar .brand { color: #fff !important; font-size: 1.15rem; font-weight: 700; margin: 0; }
+        .topbar .btn-top {
+            background-color: #1e3a5f !important; color: #fff !important;
+            border: 1px solid #334155 !important; font-size: 0.9rem;
+            padding: 6px 14px; margin-left: 8px; border-radius: 6px;
+            text-decoration: none; display: inline-block;
+        }
+        .topbar .btn-top:hover { background-color: #334155 !important; }
+
+        .card-main {
+            border: none; border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+            background: #fff;
+        }
+        .card-main h5 {
+            color: #1e3a5f; font-weight: 600;
+            padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 16px;
+        }
+
+        .detail-label {
+            color: #64748b; font-size: 0.78rem;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            font-weight: 600; margin-bottom: 2px;
+        }
+        .detail-value { color: #0f172a; font-size: 1rem; margin-bottom: 16px; }
+
+        .prediction-card {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            color: white; border-radius: 10px;
+            padding: 22px; margin-bottom: 20px;
+        }
+        .prediction-card .label {
+            font-size: 0.78rem; text-transform: uppercase;
+            letter-spacing: 1px; opacity: 0.8;
+        }
+        .prediction-card .value { font-size: 1.6rem; font-weight: 700; margin: 6px 0; }
+        .prediction-card .confiance-bar {
+            background-color: rgba(255,255,255,0.2); border-radius: 10px;
+            height: 8px; margin-top: 10px; overflow: hidden;
+        }
+        .prediction-card .confiance-fill {
+            background-color: #22c55e; height: 100%; border-radius: 10px;
+        }
+
+        .badge-secteur { font-size: 0.75rem; font-weight: 500; padding: 5px 9px; }
+
+        .historique-item {
+            border-left: 3px solid #1e3a5f; padding: 10px 14px;
+            margin-bottom: 10px; background: #f8fafc; border-radius: 4px;
+        }
+        .historique-item small { color: #64748b; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="container d-flex justify-content-between align-items-center">
+        <p class="brand">Région Atsimo-Andrefana — Détail de l'appel d'offres</p>
+        <div>
+            <a href="{% url 'appels_offres:liste_appels' %}" class="btn-top">← Retour à la liste</a>
+            <a href="{% url 'appels_offres:dashboard' %}" class="btn-top">📊 Tableau de bord</a>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row g-4">
+
+        <div class="col-lg-8">
+            <div class="card-main p-4 mb-4">
+                <h5>Informations de l'appel d'offres</h5>
+
+                <div class="detail-label">Intitulé</div>
+                <div class="detail-value" style="font-size: 1.2rem; font-weight: 600;">
+                    {{ appel.titre }}
+                </div>
+
+                <div class="detail-label">Description</div>
+                <div class="detail-value">{{ appel.description|linebreaksbr }}</div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-label">Autorité contractante</div>
+                        <div class="detail-value">{{ appel.autorite_contractante }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Montant estimé</div>
+                        <div class="detail-value">
+                            {% if appel.montant %}{{ appel.montant|floatformat:0 }} Ar{% else %}<span class="text-muted">Non précisé</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-label">Secteur</div>
+                        <div class="detail-value">
+                            {% if appel.secteur %}
+                                <span class="badge bg-info text-dark badge-secteur">{{ appel.secteur.nom }}</span>
+                            {% else %}<span class="text-muted">Non défini</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Type de procédure</div>
+                        <div class="detail-value">
+                            {% if appel.type_procedure %}{{ appel.type_procedure.nom }}{% else %}<span class="text-muted">Non défini</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-label">District</div>
+                        <div class="detail-value">{{ appel.district.nom|default:"Non défini" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Statut</div>
+                        <div class="detail-value">
+                            {% if appel.statut == "publie" %}<span class="badge bg-primary">Publié</span>
+                            {% elif appel.statut == "en_cours" %}<span class="badge bg-warning text-dark">En cours</span>
+                            {% elif appel.statut == "attribue" %}<span class="badge bg-success">Attribué</span>
+                            {% else %}<span class="badge bg-secondary">Infructueux</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-label">Date de publication</div>
+                        <div class="detail-value">{{ appel.date_publication|date:"d/m/Y" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Date limite</div>
+                        <div class="detail-value">{{ appel.date_limite|date:"d/m/Y" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+
+            {% for c in classifications %}
+                {% if forloop.first %}
+                <div class="prediction-card">
+                    <div class="label">Secteur prédit par l'IA</div>
+                    <div class="value">{{ c.secteur_predit.nom|default:"Non classé" }}</div>
+                    <div class="label">Score de confiance</div>
+                    <div class="confiance-bar">
+                        <div class="confiance-fill" style="width: {{ c.confiance|floatformat:0 }}0%;"></div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 0.9rem;">
+                        {{ c.confiance|floatformat:2 }} (soit {{ c.confiance|floatformat:2 }} de confiance)
+                    </div>
+                </div>
+
+                <div class="card-main p-4 mb-4">
+                    <h5>✅ Vérifier la classification</h5>
+                    <p class="text-muted small">
+                        Confirmez ou corrigez le secteur prédit par l'IA. Cette vérification
+                        sert à mesurer la précision du modèle (pour le mémoire).
+                    </p>
+                    <form method="post" action="{% url 'appels_offres:corriger_prediction' c.id %}">
+                        {% csrf_token %}
+                        <label class="form-label small">Secteur réel</label>
+                        <select name="secteur_reel" class="form-select mb-3" required>
+                            <option value="">-- Choisir le bon secteur --</option>
+                            {% for s in tous_les_secteurs %}
+                                <option value="{{ s.id }}"
+                                    {% if c.secteur_reel and c.secteur_reel.id == s.id %}selected{% endif %}>
+                                    {{ s.nom }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary w-100">Enregistrer la correction</button>
+                        {% if c.secteur_reel %}
+                        <p class="text-success small mt-2 mb-0">
+                            ✅ Déjà vérifié : <strong>{{ c.secteur_reel.nom }}</strong>
+                        </p>
+                        {% endif %}
+                    </form>
+                </div>
+                {% endif %}
+            {% empty %}
+                <div class="card-main p-4 mb-4">
+                    <h5>Classification IA</h5>
+                    <p class="text-muted">Aucune prédiction enregistrée pour cet appel d'offres.</p>
+                </div>
+            {% endfor %}
+
+            <div class="card-main p-4">
+                <h5>Historique des prédictions</h5>
+                {% for c in classifications %}
+                <div class="historique-item">
+                    <strong>{{ c.secteur_predit.nom|default:"—" }}</strong><br>
+                    <small>
+                        Confiance : {{ c.confiance|floatformat:2 }}<br>
+                        Le {{ c.date_prediction|date:"d/m/Y à H:i" }}
+                        {% if c.secteur_reel %}<br>Secteur réel : <strong>{{ c.secteur_reel.nom }}</strong>{% endif %}
+                    </small>
+                </div>
+                {% empty %}
+                <p class="text-muted">Aucune prédiction enregistrée.</p>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

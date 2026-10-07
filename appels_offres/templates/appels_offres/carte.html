@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Carte des appels d'offres - Région Atsimo-Andrefana</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+
+        /* Header institutionnel (cohérent avec les autres pages) */
+        .topbar {
+            background-color: #0f172a !important;
+            padding: 16px 20px;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .topbar .brand {
+            color: #ffffff !important;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .topbar .btn-top {
+            background-color: #1e3a5f !important;
+            color: #ffffff !important;
+            border: 1px solid #334155 !important;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 6px 14px;
+            margin-left: 8px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .topbar .btn-top:hover {
+            background-color: #334155 !important;
+            color: #ffffff !important;
+        }
+
+        #map { height: calc(100vh - 58px); width: 100%; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <p class="brand">Carte des appels d'offres par district — Région Atsimo-Andrefana</p>
+    <div>
+        <a href="{% url 'appels_offres:dashboard' %}" class="btn-top">← Retour au tableau de bord</a>
+        <a href="{% url 'appels_offres:liste_appels' %}" class="btn-top">📋 Appels d'offres</a>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    const map = L.map('map').setView([-23.35, 43.67], 8);
+
+    L.tileLayer('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors, tiles HOT',
+        maxZoom: 19,
+    }).addTo(map);
+
+    fetch("/api/carte-data/")
+    .then(response => response.json())
+    .then(data => {
+        const tousLesMarqueurs = [];
+
+        data.forEach(d => {
+            const marker = L.marker([d.lat, d.lng]).addTo(map);
+
+            let contenuPopup = `<strong>${d.nom}</strong><br>${d.nb_appels} appel(s) d'offres<hr>`;
+            d.appels.forEach(a => {
+                contenuPopup += `<small><strong>${a.titre}</strong><br>Par : ${a.autorite}<br>Statut : ${a.statut}</small><hr>`;
+            });
+            marker.bindPopup(contenuPopup);
+
+            tousLesMarqueurs.push(marker);
+        });
+
+        if (data.length === 0) {
+            console.warn("Aucun district avec coordonnées GPS en base.");
+        } else {
+            const groupe = L.featureGroup(tousLesMarqueurs);
+            map.fitBounds(groupe.getBounds().pad(0.2));
+        }
+    })
+    .catch(err => console.error("Erreur chargement carte :", err));
+</script>
+
+</body>
+</html>

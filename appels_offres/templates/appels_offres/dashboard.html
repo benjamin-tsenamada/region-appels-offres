@@ -2,58 +2,135 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Suivi des appels d'offres - Region Atsimo-Andrefana</title>
+    <title>Suivi des appels d'offres - Région Atsimo-Andrefana</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body { background-color: #f4f6f9; }
-        .card-stat { border: none; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-        .badge-secteur { font-size: 0.75rem; }
-        header.navbar { background-color: #1565C0; }
+        body { background-color: #f8fafc; color: #1e293b; margin: 0; }
+
+        .topbar {
+            background-color: #0f172a !important;
+            padding: 16px 0 !important;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+        }
+        .topbar .brand {
+            color: #ffffff !important;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        .topbar .btn-top {
+            background-color: #1e3a5f !important;
+            color: #ffffff !important;
+            border: 1px solid #334155 !important;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 6px 14px;
+            margin-left: 8px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .topbar .btn-top:hover { background-color: #334155 !important; color: #ffffff !important; }
+
+        .card-stat {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+            background: #ffffff;
+            border-left: 4px solid #1e3a5f;
+        }
+        .card-stat.success { border-left-color: #16a34a; }
+        .card-stat.danger  { border-left-color: #dc2626; }
+        .card-stat h2 { color: #0f172a; font-weight: 700; margin: 4px 0 0 0; }
+        .card-stat small {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.72rem;
+            color: #64748b;
+        }
+
+        .card-main {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+            background: #ffffff;
+        }
+        .card-main h5 {
+            color: #1e3a5f;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 16px;
+        }
+
+        .table thead th {
+            color: #64748b;
+            font-weight: 600;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .table tbody tr:hover { background-color: #f8fafc; }
+        .badge-secteur { font-size: 0.75rem; font-weight: 500; padding: 5px 9px; }
+
+        /* Conteneur du graphique */
+        .chart-wrapper {
+            position: relative;
+            height: 260px;
+            margin-bottom: 12px;
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-dark mb-4">
-    <div class="container">
-        <span class="navbar-brand mb-0 h1">Region Atsimo-Andrefana - Suivi des appels d'offres</span>
+<div class="topbar">
+    <div class="container d-flex justify-content-between align-items-center">
+        <p class="brand">Région Atsimo-Andrefana — Suivi des appels d'offres</p>
+        <div>
+            <a href="{% url 'appels_offres:liste_appels' %}" class="btn-top">📋 Appels d'offres</a>
+                        <a href="{% url 'appels_offres:performance_ia' %}" class="btn-top">🤖 Performance IA</a>
+            <a href="{% url 'appels_offres:carte' %}" class="btn-top">🗺️ Carte des districts</a>
+        </div>
     </div>
-</nav>
+</div>
 
-<div class="container">
+<div class="container mt-4">
 
     <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="card card-stat p-3">
-                <small class="text-muted">Appels d'offres actifs</small>
-                <h2 class="mb-0">{{ total_actifs }}</h2>
+            <div class="card-stat p-3">
+                <small>Appels d'offres actifs</small>
+                <h2>{{ total_actifs }}</h2>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card card-stat p-3">
-                <small class="text-muted">Montant total (Ariary)</small>
-                <h2 class="mb-0">{{ montant_total|floatformat:0 }}</h2>
+            <div class="card-stat success p-3">
+                <small>Montant total (Ariary)</small>
+                <h2>{{ montant_total|floatformat:0 }}</h2>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card card-stat p-3">
-                <small class="text-muted">Echeances sous 7 jours</small>
-                <h2 class="mb-0 text-danger">{{ echeances_proches }}</h2>
+            <div class="card-stat danger p-3">
+                <small>Échéances sous 7 jours</small>
+                <h2 style="color:#dc2626;">{{ echeances_proches }}</h2>
             </div>
         </div>
     </div>
 
     <div class="row g-3">
         <div class="col-lg-8">
-            <div class="card card-stat p-3">
-                <h5 class="mb-3">Appels d'offres recents</h5>
+            <div class="card-main p-4">
+                <h5>Appels d'offres récents</h5>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead>
                             <tr>
-                                <th>Intitule</th>
+                                <th>Intitulé</th>
                                 <th>Secteur (IA)</th>
                                 <th>District</th>
-                                <th>Echeance</th>
+                                <th>Échéance</th>
                                 <th>Statut</th>
                             </tr>
                         </thead>
@@ -74,18 +151,18 @@
                                 <td>{{ item.ao.date_limite|date:"d/m/Y" }}</td>
                                 <td>
                                     {% if item.ao.statut == "publie" %}
-                                        <span class="badge bg-primary">Publie</span>
+                                        <span class="badge bg-primary">Publié</span>
                                     {% elif item.ao.statut == "en_cours" %}
                                         <span class="badge bg-warning text-dark">En cours</span>
                                     {% elif item.ao.statut == "attribue" %}
-                                        <span class="badge bg-success">Attribue</span>
+                                        <span class="badge bg-success">Attribué</span>
                                     {% else %}
                                         <span class="badge bg-secondary">Infructueux</span>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="5" class="text-center text-muted">Aucun appel d'offres pour le moment.</td></tr>
+                            <tr><td colspan="5" class="text-center text-muted py-4">Aucun appel d'offres pour le moment.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -94,26 +171,83 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card card-stat p-3">
-                <h5 class="mb-3">Repartition par type de procedure</h5>
-                {% for p in repartition_procedure %}
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between">
-                        <span>{{ p.code }}</span>
-                        <strong>{{ p.pourcentage }}%</strong>
-                    </div>
-                    <div class="progress" style="height: 6px;">
-                        <div class="progress-bar" style="width: {{ p.pourcentage }}%;"></div>
-                    </div>
+            <div class="card-main p-4">
+                <h5>Répartition par type de procédure</h5>
+
+                {% if repartition_procedure %}
+                <div class="chart-wrapper">
+                    <canvas id="chartProcedures"></canvas>
                 </div>
-                {% empty %}
-                <p class="text-muted">Pas encore de donnees.</p>
-                {% endfor %}
+                {% else %}
+                <p class="text-muted">Pas encore de données.</p>
+                {% endif %}
             </div>
         </div>
     </div>
 
 </div>
+
+{% if repartition_procedure %}
+<script>
+    // Récupération des données depuis Django
+    const labels = [
+        {% for p in repartition_procedure %}"{{ p.code }}"{% if not forloop.last %},{% endif %}{% endfor %}
+    ];
+    const data = [
+        {% for p in repartition_procedure %}{{ p.nombre }}{% if not forloop.last %},{% endif %}{% endfor %}
+    ];
+
+    // Palette de couleurs distinctes et sobres
+    const couleurs = [
+        '#1e3a5f',  // bleu institutionnel
+        '#16a34a',  // vert
+        '#f59e0b',  // orange
+        '#7c3aed',  // violet
+        '#dc2626',  // rouge
+        '#0891b2',  // cyan
+    ];
+
+    const ctx = document.getElementById('chartProcedures').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: couleurs.slice(0, labels.length),
+                borderColor: '#ffffff',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 12 },
+                        padding: 12,
+                        boxWidth: 14,
+                        color: '#1e293b',
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const valeur = context.parsed;
+                            const pourcent = ((valeur / total) * 100).toFixed(1);
+                            return context.label + ' : ' + valeur + ' (' + pourcent + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
 
 </body>
 </html>
