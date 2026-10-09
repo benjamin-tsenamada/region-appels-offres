@@ -70,6 +70,7 @@ def liste_appels(request):
     secteur_id = request.GET.get("secteur", "")
     district_id = request.GET.get("district", "")
     statut = request.GET.get("statut", "")
+    source = request.GET.get("source", "")
     date_limite_avant = request.GET.get("date_limite_avant", "")
 
     if q:
@@ -84,6 +85,9 @@ def liste_appels(request):
     if statut:
         appels = appels.filter(statut=statut)
 
+    if source:
+        appels = appels.filter(source=source)
+
     if date_limite_avant:
         appels = appels.filter(date_limite__lte=date_limite_avant)
 
@@ -96,11 +100,13 @@ def liste_appels(request):
         "secteurs": Secteur.objects.all().order_by("nom"),
         "districts": District.objects.all().order_by("nom"),
         "statuts": AppelOffre.STATUT_CHOICES,
+        "sources": AppelOffre.SOURCE_CHOICES,
         "filtres": {
             "q": q,
             "secteur": secteur_id,
             "district": district_id,
             "statut": statut,
+            "source": source,
             "date_limite_avant": date_limite_avant,
         },
         "total_resultats": appels.count(),
@@ -200,7 +206,7 @@ def carte_data(request):
         appels = AppelOffre.objects.filter(district=d)
         liste_appels = [
             {"titre": a.titre, "autorite": a.autorite_contractante, "statut": a.statut}
-            for a in appels
+            for a in appels[:20]
         ]
         data.append({
             "nom": d.nom,
