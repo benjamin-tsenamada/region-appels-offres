@@ -9,3 +9,4 @@ python manage.py collectstatic --no-input
 python manage.py migrate
 python manage.py charger_geo
 python manage.py import_armp
+python manage.py reclassifier

@@ -1,5 +1,5 @@
 """
-Import des AO depuis le portail ARMP.
+Import des AO depuis le portail ARMP + classification automatique par le modèle NLP.
 """
 
 from datetime import datetime
@@ -8,13 +8,14 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from appels_offres.models import (
-    AppelOffre, Secteur, TypeProcedure, District, Region
+    AppelOffre, Secteur, TypeProcedure, ClassificationLog
 )
 from appels_offres.scrapers.armp import extraire_tous_les_ao
+from appels_offres.ml.classifier import predict_secteur
 
 
 class Command(BaseCommand):
-    help = "Importe les appels d'offres publics depuis le portail ARMP"
+    help = "Importe les AO depuis le portail ARMP et les classifie automatiquement"
 
     def add_arguments(self, parser):
         parser.add_argument("--limit", type=int, default=None)
@@ -35,6 +36,7 @@ class Command(BaseCommand):
             tous_les_ao = tous_les_ao[:limit]
 
         types_proc = {t.code: t for t in TypeProcedure.objects.all()}
+        secteurs_db = {s.nom.lower(): s for s in Secteur.objects.all()}
 
         numeros_existants = set(
             AppelOffre.objects.filter(source="ARMP").exclude(numero_armp__isnull=True)
@@ -43,6 +45,7 @@ class Command(BaseCommand):
 
         crees = 0
         ignores = 0
+        classes = 0
 
         for ao in tous_les_ao:
             numero = ao.get("numero") or ""
@@ -69,7 +72,7 @@ class Command(BaseCommand):
 
             try:
                 with transaction.atomic():
-                    AppelOffre.objects.create(
+                    nouveau = AppelOffre.objects.create(
                         titre=ao.get("objet", "")[:500],
                         description=ao.get("objet", ""),
                         autorite_contractante=ao.get("entite", "")[:255],
@@ -88,11 +91,30 @@ class Command(BaseCommand):
                     if numero:
                         numeros_existants.add(numero)
 
+                    # ---- CLASSIFICATION AUTOMATIQUE ----
+                    texte_a_classifier = f"{nouveau.titre} {nouveau.description}"
+                    secteur_predit_nom, confiance = predict_secteur(texte_a_classifier)
+
+                    if secteur_predit_nom:
+                        secteur_obj = secteurs_db.get(secteur_predit_nom.lower())
+                        if secteur_obj:
+                            nouveau.secteur = secteur_obj
+                            nouveau.save()
+
+                            ClassificationLog.objects.create(
+                                appel_offre=nouveau,
+                                texte_source=texte_a_classifier[:2000],
+                                secteur_predit=secteur_obj,
+                                confiance=confiance,
+                            )
+                            classes += 1
+
             except Exception as e:
                 self.stdout.write(self.style.WARNING(f"[SKIP] {e}"))
                 ignores += 1
 
         self.stdout.write("")
         self.stdout.write(self.style.SUCCESS("=== Import terminé ==="))
-        self.stdout.write(f"Créés   : {crees}")
-        self.stdout.write(f"Ignorés : {ignores}")
+        self.stdout.write(f"Créés        : {crees}")
+        self.stdout.write(f"Classifiés   : {classes}")
+        self.stdout.write(f"Ignorés      : {ignores}")
