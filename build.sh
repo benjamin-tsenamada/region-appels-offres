@@ -7,4 +7,5 @@ pip install -r requirements.txt
 
 python manage.py collectstatic --no-input
 python manage.py migrate
-python manage.py initialiser_donnees
+python manage.py charger_geo
+python manage.py import_armp
