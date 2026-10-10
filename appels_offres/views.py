@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from .models import AppelOffre, TypeProcedure, District, Secteur, ClassificationLog
+from .models import AppelOffre, TypeProcedure, District, Region, Secteur, ClassificationLog
 
 
 # ============================================================
@@ -58,7 +58,7 @@ def dashboard(request):
 
 
 # ============================================================
-# LISTE DES APPELS D'OFFRES + FILTRES
+# LISTE DES APPELS D'OFFRES + FILTRES ENRICHIS
 # ============================================================
 
 def liste_appels(request):
@@ -68,16 +68,24 @@ def liste_appels(request):
 
     q = request.GET.get("q", "").strip()
     secteur_id = request.GET.get("secteur", "")
+    region_nom = request.GET.get("region", "")
     district_id = request.GET.get("district", "")
     statut = request.GET.get("statut", "")
     source = request.GET.get("source", "")
+    mode_passation = request.GET.get("mode", "")
     date_limite_avant = request.GET.get("date_limite_avant", "")
 
     if q:
-        appels = appels.filter(titre__icontains=q) | appels.filter(description__icontains=q) | appels.filter(autorite_contractante__icontains=q)
+        appels = appels.filter(titre__icontains=q) | \
+                 appels.filter(description__icontains=q) | \
+                 appels.filter(autorite_contractante__icontains=q) | \
+                 appels.filter(reference_armp__icontains=q)
 
     if secteur_id:
         appels = appels.filter(secteur_id=secteur_id)
+
+    if region_nom:
+        appels = appels.filter(region=region_nom)
 
     if district_id:
         appels = appels.filter(district_id=district_id)
@@ -87,6 +95,9 @@ def liste_appels(request):
 
     if source:
         appels = appels.filter(source=source)
+
+    if mode_passation:
+        appels = appels.filter(mode_passation=mode_passation)
 
     if date_limite_avant:
         appels = appels.filter(date_limite__lte=date_limite_avant)
@@ -98,15 +109,19 @@ def liste_appels(request):
     contexte = {
         "page_obj": page_obj,
         "secteurs": Secteur.objects.all().order_by("nom"),
+        "regions": Region.objects.all().order_by("nom"),
         "districts": District.objects.all().order_by("nom"),
         "statuts": AppelOffre.STATUT_CHOICES,
         "sources": AppelOffre.SOURCE_CHOICES,
+        "modes": ["AOO", "AOR", "ACO", "AMI", "APQ"],
         "filtres": {
             "q": q,
             "secteur": secteur_id,
+            "region": region_nom,
             "district": district_id,
             "statut": statut,
             "source": source,
+            "mode": mode_passation,
             "date_limite_avant": date_limite_avant,
         },
         "total_resultats": appels.count(),
@@ -205,11 +220,19 @@ def carte_data(request):
     for d in District.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True):
         appels = AppelOffre.objects.filter(district=d)
         liste_appels = [
-            {"titre": a.titre, "autorite": a.autorite_contractante, "statut": a.statut}
+            {
+                "titre": a.titre,
+                "autorite": a.autorite_contractante,
+                "statut": a.statut,
+                "region": a.region or "",
+                "reference": a.reference_armp or "",
+                "mode": a.mode_passation or "",
+            }
             for a in appels[:20]
         ]
         data.append({
             "nom": d.nom,
+            "region": d.region.nom if d.region else "",
             "lat": d.latitude,
             "lng": d.longitude,
             "nb_appels": appels.count(),

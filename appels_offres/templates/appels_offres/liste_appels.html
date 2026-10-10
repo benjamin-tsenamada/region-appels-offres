@@ -12,43 +12,28 @@
             padding: 16px 0 !important;
             box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
         }
-        .topbar .brand {
-            color: #ffffff !important;
-            font-size: 1.15rem;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-            margin: 0;
-        }
+        .topbar .brand { color: #fff !important; font-size: 1.15rem; font-weight: 700; margin: 0; }
         .topbar .btn-top {
-            background-color: #1e3a5f !important;
-            color: #ffffff !important;
-            border: 1px solid #334155 !important;
-            font-size: 0.9rem;
-            font-weight: 500;
-            padding: 6px 14px;
-            margin-left: 8px;
-            border-radius: 6px;
-            text-decoration: none;
-            display: inline-block;
+            background-color: #1e3a5f !important; color: #fff !important;
+            border: 1px solid #334155 !important; font-size: 0.9rem;
+            padding: 6px 14px; margin-left: 8px; border-radius: 6px;
+            text-decoration: none; display: inline-block;
         }
-        .topbar .btn-top:hover { background-color: #334155 !important; color: #ffffff !important; }
+        .topbar .btn-top:hover { background-color: #334155 !important; }
 
         .card-main {
-            border: none;
-            border-radius: 10px;
+            border: none; border-radius: 10px;
             box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-            background: #ffffff;
+            background: #fff;
         }
         .card-main h5 {
-            color: #1e3a5f;
-            font-weight: 600;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #e2e8f0;
+            color: #1e3a5f; font-weight: 600;
+            padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;
             margin-bottom: 16px;
         }
 
-        .form-label { font-weight: 500; color: #475569; }
-        .form-control, .form-select { border-color: #cbd5e1; }
+        .form-label { font-weight: 500; color: #475569; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.3px; }
+        .form-control, .form-select { border-color: #cbd5e1; font-size: 0.9rem; }
         .form-control:focus, .form-select:focus {
             border-color: #1e3a5f;
             box-shadow: 0 0 0 0.15rem rgba(30, 58, 95, 0.15);
@@ -64,127 +49,213 @@
         }
 
         .table thead th {
-            color: #64748b;
-            font-weight: 600;
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: #64748b; font-weight: 600; font-size: 0.72rem;
+            text-transform: uppercase; letter-spacing: 0.4px;
             border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
         }
         .table tbody tr:hover { background-color: #f8fafc; }
-        .badge-secteur { font-size: 0.75rem; font-weight: 500; padding: 5px 9px; }
+        .table td { font-size: 0.88rem; vertical-align: middle; }
+
+        .badge-secteur { font-size: 0.72rem; font-weight: 500; padding: 4px 8px; }
+        .badge-mode { font-size: 0.72rem; font-weight: 600; padding: 4px 8px; background: #1e3a5f; color: #fff; }
+        .badge-region { font-size: 0.72rem; padding: 4px 8px; background: #e0e7ff; color: #1e3a5f; border: 1px solid #c7d2fe; }
+
+        .ref-text { font-size: 0.72rem; color: #64748b; font-family: monospace; }
+        .entite-text { font-size: 0.78rem; color: #475569; }
+
+        .btn-xs {
+            font-size: 0.72rem; padding: 3px 8px; border-radius: 4px;
+        }
+
+        .date-badge {
+            font-size: 0.75rem; background: #fef3c7; color: #78350f;
+            padding: 3px 6px; border-radius: 4px; font-weight: 500;
+        }
+        .date-badge.urgent { background: #fee2e2; color: #7f1d1d; }
     </style>
 </head>
 <body>
 
 <div class="topbar">
-    <div class="container d-flex justify-content-between align-items-center">
-        <p class="brand">Région Atsimo-Andrefana — Appels d'offres</p>
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <p class="brand">Région Atsimo-Andrefana — Appels d'offres publics</p>
         <div>
             <a href="{% url 'appels_offres:dashboard' %}" class="btn-top">📊 Tableau de bord</a>
+            <a href="{% url 'appels_offres:performance_ia' %}" class="btn-top">🤖 Performance IA</a>
             <a href="{% url 'appels_offres:carte' %}" class="btn-top">🗺️ Carte</a>
         </div>
     </div>
 </div>
 
-<div class="container mt-4">
+<div class="container-fluid mt-4 px-4">
 
+    <!-- Filtres enrichis -->
     <div class="card-main p-4 mb-4">
         <h5>🔍 Rechercher un appel d'offres</h5>
-        <form method="get" class="row g-2">
+        <form method="get">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Mot-clé (titre, objet, référence, autorité)</label>
+                    <input type="text" name="q" class="form-control" placeholder="Ex : informatique, réhabilitation..."
+                           value="{{ filtres.q }}">
+                </div>
 
-            <div class="col-md-4">
-                <label class="form-label small">Mot-clé</label>
-                <input type="text" name="q" class="form-control" placeholder="Titre, description, autorité..."
-                       value="{{ filtres.q }}">
+                <div class="col-md-2">
+                    <label class="form-label">Région</label>
+                    <select name="region" class="form-select">
+                        <option value="">Toutes les régions</option>
+                        {% for r in regions %}
+                            <option value="{{ r.nom }}" {% if filtres.region == r.nom %}selected{% endif %}>{{ r.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Secteur</label>
+                    <select name="secteur" class="form-select">
+                        <option value="">Tous les secteurs</option>
+                        {% for s in secteurs %}
+                            <option value="{{ s.id }}" {% if filtres.secteur == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Mode de passation</label>
+                    <select name="mode" class="form-select">
+                        <option value="">Tous les modes</option>
+                        {% for m in modes %}
+                            <option value="{{ m }}" {% if filtres.mode == m %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Source</label>
+                    <select name="source" class="form-select">
+                        <option value="">Toutes sources</option>
+                        {% for code, label in sources %}
+                            <option value="{{ code }}" {% if filtres.source == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Statut</label>
+                    <select name="statut" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        {% for code, label in statuts %}
+                            <option value="{{ code }}" {% if filtres.statut == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Échéance avant le</label>
+                    <input type="date" name="date_limite_avant" class="form-control"
+                           value="{{ filtres.date_limite_avant }}">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">District</label>
+                    <select name="district" class="form-select">
+                        <option value="">Tous les districts</option>
+                        {% for d in districts %}
+                            <option value="{{ d.id }}" {% if filtres.district == d.id|stringformat:"s" %}selected{% endif %}>
+                                {{ d.nom }}{% if d.region %} ({{ d.region.nom }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 mt-2">
+                    <button type="submit" class="btn btn-primary">🔍 Filtrer</button>
+                    <a href="{% url 'appels_offres:liste_appels' %}" class="btn btn-outline-secondary">Réinitialiser</a>
+                    <span class="text-muted ms-3"><strong>{{ total_resultats }}</strong> résultat(s)</span>
+                </div>
             </div>
-
-            <div class="col-md-2">
-                <label class="form-label small">Secteur</label>
-                <select name="secteur" class="form-select">
-                    <option value="">Tous</option>
-                    {% for s in secteurs %}
-                        <option value="{{ s.id }}" {% if filtres.secteur == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nom }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label small">District</label>
-                <select name="district" class="form-select">
-                    <option value="">Tous</option>
-                    {% for d in districts %}
-                        <option value="{{ d.id }}" {% if filtres.district == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nom }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label small">Statut</label>
-                <select name="statut" class="form-select">
-                    <option value="">Tous</option>
-                    {% for code, label in statuts %}
-                        <option value="{{ code }}" {% if filtres.statut == code %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label small">Échéance avant le</label>
-                <input type="date" name="date_limite_avant" class="form-control"
-                       value="{{ filtres.date_limite_avant }}">
-            </div>
-
-            <div class="col-12 mt-2">
-                <button type="submit" class="btn btn-primary">Filtrer</button>
-                <a href="{% url 'appels_offres:liste_appels' %}" class="btn btn-outline-secondary">Réinitialiser</a>
-                <span class="text-muted ms-3">{{ total_resultats }} résultat(s)</span>
-            </div>
-
         </form>
     </div>
 
+    <!-- Tableau des résultats -->
     <div class="card-main p-4">
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th>Intitulé</th>
-                        <th>Secteur</th>
-                        <th>District</th>
+                        <th style="min-width: 280px;">Intitulé / Objet</th>
+                        <th>Autorité contractante</th>
+                        <th>Région</th>
+                        <th>Référence</th>
+                        <th>Mode</th>
+                        <th>Secteur (IA)</th>
                         <th>Publication</th>
                         <th>Échéance</th>
                         <th>Statut</th>
-                        <th></th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for ao in page_obj %}
                     <tr>
                         <td>
-                            <strong>{{ ao.titre }}</strong><br>
-                            <small class="text-muted">{{ ao.autorite_contractante }}</small>
+                            <strong style="font-size: 0.85rem;">{{ ao.titre|truncatechars:120 }}</strong>
+                        </td>
+                        <td>
+                            <span class="entite-text">{{ ao.autorite_contractante|truncatechars:60 }}</span>
+                        </td>
+                        <td>
+                            {% if ao.region %}
+                                <span class="badge badge-region">{{ ao.region }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ao.reference_armp %}
+                                <span class="ref-text">{{ ao.reference_armp|truncatechars:30 }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if ao.mode_passation %}
+                                <span class="badge badge-mode">{{ ao.mode_passation }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
                         </td>
                         <td>
                             {% if ao.secteur %}
                                 <span class="badge bg-info text-dark badge-secteur">{{ ao.secteur.nom }}</span>
-                            {% else %}<span class="text-muted">-</span>{% endif %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
                         </td>
-                        <td>{{ ao.district.nom|default:"-" }}</td>
-                        <td>{{ ao.date_publication|date:"d/m/Y" }}</td>
-                        <td>{{ ao.date_limite|date:"d/m/Y" }}</td>
+                        <td><small>{{ ao.date_publication|date:"d/m/Y" }}</small></td>
+                        <td>
+                            <span class="date-badge {% if ao.date_limite <= today %}urgent{% endif %}">
+                                {{ ao.date_limite|date:"d/m/Y" }}
+                            </span>
+                        </td>
                         <td>
                             {% if ao.statut == "publie" %}<span class="badge bg-primary">Publié</span>
                             {% elif ao.statut == "en_cours" %}<span class="badge bg-warning text-dark">En cours</span>
                             {% elif ao.statut == "attribue" %}<span class="badge bg-success">Attribué</span>
                             {% else %}<span class="badge bg-secondary">Infructueux</span>{% endif %}
                         </td>
-                        <td>
-                            <a href="{% url 'appels_offres:detail_appel' ao.pk %}" class="btn btn-sm btn-outline-primary">Voir le détail</a>
+                        <td class="text-nowrap">
+                            <a href="{% url 'appels_offres:detail_appel' ao.pk %}" class="btn btn-xs btn-outline-primary">Détail</a>
+                            {% if ao.url_source %}
+                                <a href="{{ ao.url_source }}" target="_blank" class="btn btn-xs btn-outline-danger" title="Voir l'avis original ARMP (PDF)">
+                                    📄 ARMP
+                                </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="7" class="text-center text-muted py-4">Aucun appel d'offres ne correspond à votre recherche.</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted py-5">Aucun appel d'offres ne correspond à votre recherche.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
