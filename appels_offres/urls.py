@@ -5,6 +5,7 @@ app_name = "appels_offres"
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
+    path("statistiques/", views.statistiques, name="statistiques"),
     path("appels/", views.liste_appels, name="liste_appels"),
     path("appels/<int:pk>/", views.detail_appel, name="detail_appel"),
     path("classification/<int:classification_id>/corriger/", views.corriger_prediction, name="corriger_prediction"),
