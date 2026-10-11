@@ -98,20 +98,25 @@
         <div class="col-lg-6">
             <div class="card-main p-4">
                 <h5>📈 Synthèse du modèle</h5>
-                {% if total_verifiees == 0 %}
-                <p class="text-muted">
-                    Aucune prédiction n'a encore été vérifiée. Rendez-vous sur la page détail
-                    d'un appel d'offres pour corriger la classification IA.
-                </p>
-                {% else %}
-                <table class="table">
+                                <table class="table">
                     <tr><td>Confiance moyenne du modèle</td><td><strong>{{ confiance_moyenne }}%</strong></td></tr>
                     <tr><td>Nombre de prédictions totales</td><td><strong>{{ total_predictions }}</strong></td></tr>
                     <tr><td>Prédictions vérifiées manuellement</td><td><strong>{{ total_verifiees }}</strong></td></tr>
                     <tr><td>Prédictions correctes</td><td><strong>{{ correctes }}</strong></td></tr>
                     <tr><td><strong>Taux de précision</strong></td>
-                        <td><strong style="color:#16a34a; font-size:1.2rem;">{{ precision }}%</strong></td></tr>
+                        <td>
+                            {% if precision is not None %}
+                                <strong style="color:#16a34a; font-size:1.2rem;">{{ precision }}%</strong>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td></tr>
                 </table>
+
+                {% if total_verifiees == 0 %}
+                <p class="text-muted small mt-3 mb-0">
+                    💡 Pour calculer le taux de précision, allez sur la page détail d'un AO et corrigez la classification IA.
+                </p>
                 {% endif %}
             </div>
         </div>
