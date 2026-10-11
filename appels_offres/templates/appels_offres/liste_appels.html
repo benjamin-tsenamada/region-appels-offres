@@ -75,7 +75,7 @@
                             <th style="padding-left: 18px; min-width: 280px;">Intitulé / Objet</th>
                             <th>Autorité</th>
                             <th>Région</th>
-                            <th>Réf.</th>
+                            <th>Réf. ARMP</th>
                             <th>Mode</th>
                             <th>Secteur (IA)</th>
                             <th>Pub.</th>
@@ -96,7 +96,8 @@
                                 {% else %}<span class="text-muted">—</span>{% endif %}
                             </td>
                             <td>
-                                {% if ao.reference_armp %}<span class="ref-text">{{ ao.reference_armp|truncatechars:18 }}</span>
+                                {% if ao.reference_armp %}
+                                    <span class="ref-text" title="{{ ao.reference_armp }}">{{ ao.reference_armp|truncatechars:22 }}</span>
                                 {% else %}<span class="text-muted">—</span>{% endif %}
                             </td>
                             <td>
@@ -116,10 +117,11 @@
                                 {% else %}<span class="badge bg-secondary" style="font-size:0.65rem;">Infructueux</span>{% endif %}
                             </td>
                             <td class="text-nowrap">
-                                <a href="{% url 'appels_offres:detail_appel' ao.pk %}" class="btn btn-sm btn-outline-primary" style="font-size:0.7rem; padding:2px 6px;">Détail</a>
-                                {% if ao.url_source %}
-                                <a href="{{ ao.url_source }}" target="_blank" class="btn btn-sm btn-outline-danger" style="font-size:0.7rem; padding:2px 6px;">PDF</a>
-                                {% endif %}
+                                <a href="{% url 'appels_offres:detail_appel' ao.pk %}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   style="font-size:0.7rem; padding:2px 8px;">
+                                    Détail
+                                </a>
                             </td>
                         </tr>
                         {% empty %}
