@@ -5,20 +5,47 @@
 
 <div class="page-header">
     <div class="container">
-        <h1>🗺️ Carte des districts de Madagascar</h1>
-        <p class="sub">Visualisation géographique des appels d'offres publics</p>
+        <h1>🗺️ Carte des appels d'offres par district</h1>
+        <p class="sub">Visualisation géographique — taille et couleur selon le nombre d'AO</p>
     </div>
 </div>
 
-<div class="container-fluid px-3 mb-4">
+<div class="container-fluid px-3 mb-3">
     <div class="panel" style="overflow: hidden;">
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <div id="map" style="height: 78vh; width: 100%;"></div>
+        <div id="map" style="height: 75vh; width: 100%;"></div>
+    </div>
+</div>
+
+<!-- Légende -->
+<div class="container mb-4">
+    <div class="panel p-3">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <strong style="font-size: 0.95rem; color: #0f172a;">📍 Nombre d'appels d'offres par district</strong>
+                <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">La taille du cercle et sa couleur indiquent le nombre d'AO</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 14px; font-size: 0.8rem; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="width: 14px; height: 14px; background: #bae6fd; border-radius: 50%; border: 1px solid #cbd5e1;"></span> 1-5
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="width: 20px; height: 20px; background: #38bdf8; border-radius: 50%; border: 1px solid #cbd5e1;"></span> 6-15
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="width: 26px; height: 26px; background: #f59e0b; border-radius: 50%; border: 1px solid #cbd5e1;"></span> 16-30
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="width: 32px; height: 32px; background: #dc2626; border-radius: 50%; border: 1px solid #cbd5e1;"></span> 30+
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+    // Initialiser la carte
     const map = L.map('map').setView([-19.0, 46.5], 6);
 
     L.tileLayer('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
@@ -26,37 +53,86 @@
         maxZoom: 19,
     }).addTo(map);
 
+    // Fonction pour la couleur selon le nombre d'AO
+    function getColor(nb) {
+        if (nb <= 5) return '#bae6fd';       // bleu clair
+        if (nb <= 15) return '#38bdf8';      // bleu moyen
+        if (nb <= 30) return '#f59e0b';      // orange
+        return '#dc2626';                    // rouge
+    }
+
+    // Fonction pour le rayon (taille du cercle)
+    function getRadius(nb) {
+        if (nb <= 5) return 8;
+        if (nb <= 15) return 12;
+        if (nb <= 30) return 18;
+        return 25;
+    }
+
+    // Récupérer les données
     fetch("/api/carte-data/")
     .then(response => response.json())
     .then(data => {
-        const tousLesMarqueurs = [];
+        const markers = [];
 
         data.forEach(d => {
-            const marker = L.marker([d.lat, d.lng]).addTo(map);
+            const nb = d.nb_appels;
+            const color = getColor(nb);
+            const radius = getRadius(nb);
 
-            let contenuPopup = `<div style="font-family: system-ui;">
+            // Créer un cercle (au lieu d'un marqueur standard)
+            const circle = L.circleMarker([d.lat, d.lng], {
+                radius: radius,
+                fillColor: color,
+                color: '#ffffff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.85,
+            }).addTo(map);
+
+            // Contenu de la popup
+            let popupContent = `<div style="font-family: system-ui; min-width: 240px;">
                 <strong style="font-size: 1.05rem; color: #0f172a;">${d.nom}</strong><br>
                 <small style="color: #64748b;">${d.region || ''}</small><br>
-                <span style="display:inline-block; margin-top:6px; padding: 3px 8px; background: #1e3a5f; color: #fff; border-radius: 4px; font-size: 0.75rem;">
-                    ${d.nb_appels} AO
-                </span><hr style="margin: 8px 0;">`;
+                <span style="display:inline-block; margin-top:8px; padding: 4px 10px; background: ${color}; color: ${nb > 15 ? '#fff' : '#0f172a'}; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
+                    ${nb} appel(s) d'offres
+                </span>`;
 
-            d.appels.forEach(a => {
-                contenuPopup += `<div style="font-size: 0.78rem; padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
-                    <strong>${a.titre.substring(0, 70)}...</strong><br>
-                    <span style="color: #64748b;">${a.autorite}</span><br>
-                    ${a.mode ? '<span style="background:#0f172a; color:#fff; padding:1px 5px; border-radius:3px; font-size:0.7rem;">' + a.mode + '</span>' : ''}
-                </div>`;
+            if (d.appels.length > 0) {
+                popupContent += `<hr style="margin: 10px 0; border-color: #e2e8f0;">`;
+                d.appels.slice(0, 5).forEach(a => {
+                    popupContent += `<div style="font-size: 0.78rem; padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
+                        <strong>${a.titre.substring(0, 75)}...</strong><br>
+                        <span style="color: #64748b;">${a.autorite.substring(0, 50)}</span>
+                        ${a.mode ? '<span style="background:#0f172a; color:#fff; padding:1px 6px; border-radius:3px; font-size:0.68rem; margin-left:4px;">' + a.mode + '</span>' : ''}
+                    </div>`;
+                });
+                if (d.appels.length > 5) {
+                    popupContent += `<div style="font-size: 0.75rem; color: #64748b; padding-top: 6px;">... et ${d.appels.length - 5} autre(s)</div>`;
+                }
+            }
+            popupContent += `</div>`;
+
+            circle.bindPopup(popupContent, { maxWidth: 380 });
+
+            // Effet de survol
+            circle.on({
+                mouseover: function(e) {
+                    e.target.setStyle({ weight: 4, color: '#0f172a' });
+                    e.target.bringToFront();
+                },
+                mouseout: function(e) {
+                    e.target.setStyle({ weight: 2, color: '#ffffff' });
+                }
             });
-            contenuPopup += '</div>';
-            marker.bindPopup(contenuPopup, { maxWidth: 350 });
 
-            tousLesMarqueurs.push(marker);
+            markers.push(circle);
         });
 
-        if (data.length > 0) {
-            const groupe = L.featureGroup(tousLesMarqueurs);
-            map.fitBounds(groupe.getBounds().pad(0.2));
+        // Ajuster la vue sur tous les marqueurs
+        if (markers.length > 0) {
+            const group = L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.15));
         }
     })
     .catch(err => console.error("Erreur chargement carte :", err));
