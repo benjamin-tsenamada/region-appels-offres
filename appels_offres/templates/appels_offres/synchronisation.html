@@ -1,0 +1,151 @@
+{% extends "appels_offres/base.html" %}
+{% block title %}Synchronisation ARMP - Région Atsimo-Andrefana{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div class="container">
+        <h1>🔄 Synchronisation avec l'ARMP</h1>
+        <p class="sub">Récupération des appels d'offres publics en temps réel depuis marches.armp.mg</p>
+    </div>
+</div>
+
+<div class="container">
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if 'success' in message.tags %}success{% else %}danger{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Cartes stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card blue">
+                <div class="stat-icon">📊</div>
+                <div class="stat-label">AO dans la base</div>
+                <p class="stat-value blue">{{ total_ao_total }}</p>
+                <div class="stat-sub">dont {{ total_ao }} depuis l'ARMP</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card green">
+                <div class="stat-icon">🕐</div>
+                <div class="stat-label">Dernière synchronisation</div>
+                <p class="stat-value green" style="font-size: 1.3rem;">
+                    {% if derniere_sync %}
+                        {{ derniere_sync.date_sync|date:"d/m/Y H:i" }}
+                    {% else %}
+                        Jamais
+                    {% endif %}
+                </p>
+                <div class="stat-sub">
+                    {% if derniere_sync %}{{ derniere_sync.nb_nouveaux }} nouveaux AO{% else %}Lancez une première sync{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card orange">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-label">Durée dernière sync</div>
+                <p class="stat-value orange">
+                    {% if derniere_sync %}{{ derniere_sync.duree_secondes }}s{% else %}—{% endif %}
+                </p>
+                <div class="stat-sub">extraction complète du portail</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bouton de synchronisation -->
+    <div class="panel mb-4">
+        <div class="panel-header">
+            <h5>🔄 Lancer une synchronisation</h5>
+        </div>
+        <div class="panel-body">
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 16px;">
+                Cette action va récupérer tous les appels d'offres publiés sur le portail officiel de l'ARMP
+                (<strong>marches.armp.mg</strong>), extraire les nouveaux, et les classer automatiquement par secteur
+                d'activité via le modèle NLP.
+            </p>
+
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                <form method="post" action="{% url 'appels_offres:lancer_synchronisation' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-lg" style="background-color: #1e3a5f; border: none;">
+                        🔄 Synchroniser maintenant
+                    </button>
+                </form>
+
+                <div style="color: #94a3b8; font-size: 0.85rem;">
+                    ⏱️ Durée estimée : 30 à 60 secondes
+                </div>
+            </div>
+
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; margin-top: 16px; border-radius: 6px;">
+                <div style="font-size: 0.85rem; color: #78350f;">
+                    <strong>💡 À savoir :</strong> La synchronisation est <strong>idempotente</strong> — les AO déjà
+                    présents dans la base ne seront pas dupliqués. Seuls les nouveaux seront ajoutés.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historique -->
+    <div class="panel">
+        <div class="panel-header">
+            <h5>📜 Historique des synchronisations</h5>
+        </div>
+        <div style="padding: 0;">
+            {% if historique %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="padding-left: 20px;">Date</th>
+                            <th>Statut</th>
+                            <th>Extraits</th>
+                            <th>Nouveaux</th>
+                            <th>Ignorés</th>
+                            <th>Durée</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sync in historique %}
+                        <tr>
+                            <td style="padding-left: 20px;">
+                                <strong>{{ sync.date_sync|date:"d/m/Y" }}</strong><br>
+                                <small style="color: #64748b;">{{ sync.date_sync|date:"H:i:s" }}</small>
+                            </td>
+                            <td>
+                                {% if sync.statut == "succes" %}
+                                    <span class="badge bg-success">Succès</span>
+                                {% elif sync.statut == "echec" %}
+                                    <span class="badge bg-danger">Échec</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">En cours</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ sync.nb_total_extraits }}</td>
+                            <td><strong style="color: #16a34a;">+{{ sync.nb_nouveaux }}</strong></td>
+                            <td>{{ sync.nb_ignores }}</td>
+                            <td>{{ sync.duree_secondes }}s</td>
+                            <td><small style="color: #64748b;">{{ sync.message|truncatechars:60 }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="padding: 30px; text-align: center; color: #64748b;">
+                Aucune synchronisation pour l'instant. Cliquez sur <strong>"Synchroniser maintenant"</strong> pour commencer.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

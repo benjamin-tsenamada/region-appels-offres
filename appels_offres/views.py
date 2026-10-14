@@ -1,15 +1,21 @@
 from datetime import date, timedelta
+import time
+
 from django.shortcuts import render, get_object_or_404, redirect
-from django.db.models import Sum, Count, Avg
+from django.db.models import Sum, Count
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from .models import AppelOffre, TypeProcedure, District, Region, Secteur, ClassificationLog
+from django.utils import timezone
+
+from .models import (
+    AppelOffre, TypeProcedure, District, Region, Secteur,
+    ClassificationLog, SynchronisationLog
+)
 
 
 def _stats_communes(appels):
-    """Calcule les stats communes à dashboard et statistiques."""
     total_ao = appels.count()
     aujourd_hui = date.today()
     dans_7_jours = aujourd_hui + timedelta(days=7)
@@ -70,6 +76,30 @@ def dashboard(request):
             "confiance": round(log.confiance * 100) if log else None,
         })
     stats["liste_appels"] = liste_appels
+
+    # Info synchronisation (dernière sync + temps écoulé)
+    derniere_sync = SynchronisationLog.objects.filter(statut="succes").first()
+    stats["derniere_sync"] = derniere_sync
+    if derniere_sync:
+        delta = timezone.now() - derniere_sync.date_sync
+        minutes = int(delta.total_seconds() / 60)
+        if minutes < 1:
+            stats["sync_texte"] = "à l'instant"
+            stats["sync_couleur"] = "green"
+        elif minutes < 60:
+            stats["sync_texte"] = f"il y a {minutes} min"
+            stats["sync_couleur"] = "green"
+        elif minutes < 1440:
+            heures = minutes // 60
+            stats["sync_texte"] = f"il y a {heures} h"
+            stats["sync_couleur"] = "orange"
+        else:
+            jours = minutes // 1440
+            stats["sync_texte"] = f"il y a {jours} j"
+            stats["sync_couleur"] = "red"
+    else:
+        stats["sync_texte"] = "jamais synchronisé"
+        stats["sync_couleur"] = "red"
 
     return render(request, "appels_offres/dashboard.html", stats)
 
@@ -208,3 +238,137 @@ def carte_data(request):
             "appels": liste_appels,
         })
     return JsonResponse(data, safe=False)
+
+
+# ============================================================
+# SYNCHRONISATION ARMP
+# ============================================================
+
+def synchronisation(request):
+    """Page de synchronisation avec l'ARMP."""
+    historique = SynchronisationLog.objects.all()[:20]
+    derniere_sync = SynchronisationLog.objects.filter(statut="succes").first()
+
+    contexte = {
+        "historique": historique,
+        "derniere_sync": derniere_sync,
+        "total_ao": AppelOffre.objects.filter(source="ARMP").count(),
+        "total_ao_total": AppelOffre.objects.count(),
+    }
+    return render(request, "appels_offres/synchronisation.html", contexte)
+
+
+@require_POST
+def lancer_synchronisation(request):
+    """Lance le scraper ARMP et enregistre le résultat."""
+    from appels_offres.scrapers.armp import extraire_tous_les_ao
+    from datetime import datetime
+
+    debut = time.time()
+
+    # Créer un log "en cours"
+    log_sync = SynchronisationLog.objects.create(statut="en_cours")
+
+    try:
+        # Récupérer les AO depuis l'ARMP
+        tous_les_ao = extraire_tous_les_ao()
+        nb_total = len(tous_les_ao)
+
+        # Types de procédure en base
+        types_proc = {t.code: t for t in TypeProcedure.objects.all()}
+
+        # Numéros déjà en base
+        numeros_existants = set(
+            AppelOffre.objects.filter(source="ARMP").exclude(numero_armp__isnull=True)
+            .values_list("numero_armp", flat=True)
+        )
+
+        crees = 0
+        ignores = 0
+
+        for ao in tous_les_ao:
+            numero = ao.get("numero") or ""
+            if numero and numero in numeros_existants:
+                ignores += 1
+                continue
+
+            date_publication = None
+            date_limite = None
+            try:
+                if ao.get("date_debut"):
+                    date_publication = datetime.strptime(ao["date_debut"], "%Y-%m-%d").date()
+                if ao.get("date_fin"):
+                    date_limite = datetime.strptime(ao["date_fin"], "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                pass
+
+            if not date_publication or not date_limite:
+                ignores += 1
+                continue
+
+            type_proc = types_proc.get(ao.get("mode", ""))
+
+            try:
+                nouveau = AppelOffre.objects.create(
+                    titre=ao.get("objet", "")[:500],
+                    description=ao.get("objet", ""),
+                    autorite_contractante=ao.get("entite", "")[:255],
+                    type_procedure=type_proc,
+                    date_publication=date_publication,
+                    date_limite=date_limite,
+                    statut="publie",
+                    source="ARMP",
+                    region=ao.get("region_officielle", "")[:150] if ao.get("region_officielle") else None,
+                    reference_armp=(ao.get("reference") or "")[:255] or None,
+                    numero_armp=numero[:100] if numero else None,
+                    mode_passation=(ao.get("mode") or "")[:20] or None,
+                    url_source=(ao.get("lien_fiche") or "")[:500] or None,
+                )
+                crees += 1
+                if numero:
+                    numeros_existants.add(numero)
+
+                # Classification automatique
+                from appels_offres.ml.classifier import predict_secteur
+                texte = f"{nouveau.titre} {nouveau.description}"
+                secteur_nom, confiance = predict_secteur(texte)
+                if secteur_nom:
+                    secteur_obj = Secteur.objects.filter(nom__iexact=secteur_nom).first()
+                    if secteur_obj:
+                        nouveau.secteur = secteur_obj
+                        nouveau.save(update_fields=["secteur"])
+                        ClassificationLog.objects.create(
+                            appel_offre=nouveau,
+                            texte_source=texte[:2000],
+                            secteur_predit=secteur_obj,
+                            confiance=confiance,
+                        )
+
+            except Exception:
+                ignores += 1
+
+        duree = round(time.time() - debut, 1)
+
+        # Mettre à jour le log
+        log_sync.nb_total_extraits = nb_total
+        log_sync.nb_nouveaux = crees
+        log_sync.nb_ignores = ignores
+        log_sync.duree_secondes = duree
+        log_sync.statut = "succes"
+        log_sync.message = f"Synchronisation réussie : {crees} nouveaux AO ajoutés"
+        log_sync.save()
+
+        messages.success(
+            request,
+            f"✅ Synchronisation terminée : {crees} nouveaux AO ajoutés ({duree}s)"
+        )
+
+    except Exception as e:
+        duree = round(time.time() - debut, 1)
+        log_sync.statut = "echec"
+        log_sync.duree_secondes = duree
+        log_sync.message = f"Erreur : {str(e)[:500]}"
+        log_sync.save()
+        messages.error(request, f"❌ Erreur de synchronisation : {e}")
+
+    return redirect("appels_offres:synchronisation")

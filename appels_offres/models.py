@@ -20,7 +20,7 @@ class TypeProcedure(models.Model):
 
 
 class Region(models.Model):
-    """Les 22 régions de Madagascar."""
+    """Les 23 régions de Madagascar."""
     nom = models.CharField(max_length=150, unique=True)
 
     def __str__(self):
@@ -105,3 +105,26 @@ class ClassificationLog(models.Model):
 
     def __str__(self):
         return f"Prédiction #{self.id} - {self.appel_offre.titre[:50]}"
+
+
+class SynchronisationLog(models.Model):
+    """Historique des synchronisations avec l'ARMP."""
+    STATUT_CHOICES = [
+        ("succes", "Succès"),
+        ("echec", "Échec"),
+        ("en_cours", "En cours"),
+    ]
+
+    date_sync = models.DateTimeField(auto_now_add=True)
+    nb_total_extraits = models.IntegerField(default=0, help_text="AO extraits du site ARMP")
+    nb_nouveaux = models.IntegerField(default=0, help_text="Nouveaux AO ajoutés en base")
+    nb_ignores = models.IntegerField(default=0, help_text="AO déjà en base ou sans dates")
+    duree_secondes = models.FloatField(default=0)
+    statut = models.CharField(max_length=20, choices=STATUT_CHOICES, default="succes")
+    message = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Sync du {self.date_sync.strftime('%d/%m/%Y %H:%M')} - {self.nb_nouveaux} nouveaux"
+
+    class Meta:
+        ordering = ["-date_sync"]

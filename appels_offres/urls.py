@@ -12,4 +12,6 @@ urlpatterns = [
     path("performance-ia/", views.performance_ia, name="performance_ia"),
     path("carte/", views.carte, name="carte"),
     path("api/carte-data/", views.carte_data, name="carte_data"),
+    path("synchronisation/", views.synchronisation, name="synchronisation"),
+    path("synchronisation/lancer/", views.lancer_synchronisation, name="lancer_synchronisation"),
 ]

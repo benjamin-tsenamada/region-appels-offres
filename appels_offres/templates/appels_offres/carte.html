@@ -6,7 +6,7 @@
 <div class="page-header">
     <div class="container">
         <h1>🗺️ Carte des appels d'offres par district</h1>
-        <p class="sub">Visualisation géographique — taille et couleur selon le nombre d'AO</p>
+        <p class="sub">Visualisation géographique — <strong>{{ total_districts_actifs }}</strong> districts sur 119 ont actuellement des appels d'offres actifs</p>
     </div>
 </div>
 
@@ -23,20 +23,17 @@
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
             <div>
                 <strong style="font-size: 0.95rem; color: #0f172a;">📍 Nombre d'appels d'offres par district</strong>
-                <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">La taille du cercle et sa couleur indiquent le nombre d'AO</div>
+                <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">Cliquez sur un cercle pour voir les AO</div>
             </div>
             <div style="display: flex; align-items: center; gap: 14px; font-size: 0.8rem; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="width: 14px; height: 14px; background: #bae6fd; border-radius: 50%; border: 1px solid #cbd5e1;"></span> 1-5
+                    <span style="width: 14px; height: 14px; background: #60a5fa; border-radius: 50%; border: 1px solid #fff;"></span> 1 AO
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="width: 20px; height: 20px; background: #38bdf8; border-radius: 50%; border: 1px solid #cbd5e1;"></span> 6-15
+                    <span style="width: 18px; height: 18px; background: #f59e0b; border-radius: 50%; border: 1px solid #fff;"></span> 2-4 AO
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="width: 26px; height: 26px; background: #f59e0b; border-radius: 50%; border: 1px solid #cbd5e1;"></span> 16-30
-                </div>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="width: 32px; height: 32px; background: #dc2626; border-radius: 50%; border: 1px solid #cbd5e1;"></span> 30+
+                    <span style="width: 24px; height: 24px; background: #dc2626; border-radius: 50%; border: 1px solid #fff;"></span> 5+ AO
                 </div>
             </div>
         </div>
@@ -45,56 +42,62 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Initialiser la carte
-    const map = L.map('map').setView([-19.0, 46.5], 6);
+    // Carte centrée sur Madagascar avec limites
+    const map = L.map('map', {
+        maxBounds: [[-28, 40], [-10, 52]],
+        maxBoundsViscosity: 1.0
+    }).setView([-19.0, 46.5], 6);
 
-    L.tileLayer('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+    // Fond de carte épuré (sans frontières noires épaisses)
+                L.tileLayer('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors, tiles HOT',
         maxZoom: 19,
     }).addTo(map);
 
-    // Fonction pour la couleur selon le nombre d'AO
+    // Fonction de couleur adaptée aux vraies données ARMP
     function getColor(nb) {
-        if (nb <= 5) return '#bae6fd';       // bleu clair
-        if (nb <= 15) return '#38bdf8';      // bleu moyen
-        if (nb <= 30) return '#f59e0b';      // orange
-        return '#dc2626';                    // rouge
+        if (nb === 1) return '#60a5fa';   // bleu - 1 AO
+        if (nb <= 4) return '#f59e0b';    // orange - 2 à 4 AO
+        return '#dc2626';                 // rouge - 5+ AO
     }
 
-    // Fonction pour le rayon (taille du cercle)
+    // Fonction de rayon
     function getRadius(nb) {
-        if (nb <= 5) return 8;
-        if (nb <= 15) return 12;
-        if (nb <= 30) return 18;
-        return 25;
+        if (nb === 1) return 10;
+        if (nb <= 4) return 14;
+        return 20;
     }
 
-    // Récupérer les données
+    // Charger les données
     fetch("/api/carte-data/")
     .then(response => response.json())
     .then(data => {
-        const markers = [];
 
-        data.forEach(d => {
+        // On ne garde QUE les districts avec au moins 1 AO
+        const dataFiltrees = data.filter(d => d.nb_appels > 0);
+
+        // Trier pour afficher les gros cercles au-dessus
+        dataFiltrees.sort((a, b) => a.nb_appels - b.nb_appels);
+
+        dataFiltrees.forEach(d => {
             const nb = d.nb_appels;
             const color = getColor(nb);
             const radius = getRadius(nb);
 
-            // Créer un cercle (au lieu d'un marqueur standard)
             const circle = L.circleMarker([d.lat, d.lng], {
                 radius: radius,
                 fillColor: color,
                 color: '#ffffff',
                 weight: 2,
                 opacity: 1,
-                fillOpacity: 0.85,
+                fillOpacity: 0.9,
             }).addTo(map);
 
             // Contenu de la popup
             let popupContent = `<div style="font-family: system-ui; min-width: 240px;">
                 <strong style="font-size: 1.05rem; color: #0f172a;">${d.nom}</strong><br>
                 <small style="color: #64748b;">${d.region || ''}</small><br>
-                <span style="display:inline-block; margin-top:8px; padding: 4px 10px; background: ${color}; color: ${nb > 15 ? '#fff' : '#0f172a'}; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
+                <span style="display:inline-block; margin-top:8px; padding: 4px 10px; background: ${color}; color: #fff; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
                     ${nb} appel(s) d'offres
                 </span>`;
 
@@ -125,15 +128,10 @@
                     e.target.setStyle({ weight: 2, color: '#ffffff' });
                 }
             });
-
-            markers.push(circle);
         });
 
-        // Ajuster la vue sur tous les marqueurs
-        if (markers.length > 0) {
-            const group = L.featureGroup(markers);
-            map.fitBounds(group.getBounds().pad(0.15));
-        }
+        // Vue fixe centrée sur Madagascar
+        map.setView([-19.0, 46.5], 6);
     })
     .catch(err => console.error("Erreur chargement carte :", err));
 </script>

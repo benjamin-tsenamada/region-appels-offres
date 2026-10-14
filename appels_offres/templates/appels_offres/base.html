@@ -18,7 +18,7 @@
             min-height: 100vh;
         }
 
-        /* ============ STICKY NAVBAR (style capsule moderne) ============ */
+        /* ============ STICKY NAVBAR ============ */
         .navbar-sticky {
             position: fixed;
             top: 0; left: 0; right: 0;
@@ -48,7 +48,6 @@
         }
         .navbar-sticky .brand:hover { color: #fff; }
 
-        /* Menu style capsule comme ARMP mais moderne */
         .navbar-sticky .nav-links {
             display: flex;
             gap: 6px;
@@ -89,7 +88,7 @@
             background-attachment: fixed;
         }
 
-        /* ============ HERO (page d'accueil uniquement) ============ */
+        /* ============ HERO ============ */
         .hero {
             position: relative;
             padding: 60px 0 70px 0;
@@ -122,7 +121,7 @@
             font-weight: 400;
         }
 
-        /* ============ EN-TÊTE DE PAGE (autres pages) ============ */
+        /* ============ EN-TÊTE DE PAGE ============ */
         .page-header {
             background: linear-gradient(120deg, rgba(30, 58, 95, 0.95), rgba(15, 23, 42, 0.95));
             color: #fff;
@@ -256,7 +255,7 @@
 </head>
 <body>
 
-<!-- FOND IMAGE TOLIARA (visible partout) -->
+<!-- FOND IMAGE TOLIARA -->
 <div class="page-background"></div>
 
 <!-- BARRE STICKY -->
@@ -285,6 +284,10 @@
             <a href="{% url 'appels_offres:carte' %}"
                {% if request.resolver_match.url_name == 'carte' %}class="active"{% endif %}>
                 Carte
+            </a>
+            <a href="{% url 'appels_offres:synchronisation' %}"
+               {% if request.resolver_match.url_name == 'synchronisation' %}class="active"{% endif %}>
+                🔄 Sync ARMP
             </a>
         </div>
     </div>
