@@ -1,6 +1,8 @@
 from django.contrib import admin
-from .models import Secteur, TypeProcedure, District, AppelOffre, ClassificationLog
-from .ml.classifier import predict_secteur
+from .models import (
+    Secteur, TypeProcedure, Region, District,
+    AppelOffre, ClassificationLog, SynchronisationLog
+)
 
 
 @admin.register(Secteur)
@@ -15,65 +17,67 @@ class TypeProcedureAdmin(admin.ModelAdmin):
     search_fields = ("code", "nom")
 
 
+@admin.register(Region)
+class RegionAdmin(admin.ModelAdmin):
+    list_display = ("nom",)
+    search_fields = ("nom",)
+
+
 @admin.register(District)
 class DistrictAdmin(admin.ModelAdmin):
-    list_display = ("nom", "latitude", "longitude")
+    list_display = ("nom", "region")
+    list_filter = ("region",)
     search_fields = ("nom",)
 
 
 @admin.register(AppelOffre)
 class AppelOffreAdmin(admin.ModelAdmin):
-    list_display = (
-        "titre", "secteur", "prediction_ia", "type_procedure", "district",
-        "montant", "date_publication", "date_limite", "statut",
-    )
-    list_filter = ("statut", "secteur", "type_procedure", "district")
-    search_fields = ("titre", "description", "autorite_contractante")
-    date_hierarchy = "date_publication"
-    autocomplete_fields = ("secteur", "type_procedure", "district")
+    list_display = ("titre", "autorite_contractante", "region", "date_limite", "statut", "source")
+    list_filter = ("statut", "source", "region", "mode_passation")
+    search_fields = ("titre", "description", "autorite_contractante", "reference_armp", "numero_armp")
+    date_hierarchy = "date_limite"
+    ordering = ("-date_publication",)
 
     fieldsets = (
-        ("Informations générales", {
-            "fields": ("titre", "description", "autorite_contractante")
+        ("Informations principales", {
+            "fields": ("titre", "description", "autorite_contractante", "montant")
         }),
         ("Classification", {
-            "fields": ("secteur", "type_procedure", "district")
+            "fields": ("secteur", "type_procedure", "district", "mode_passation")
         }),
-        ("Suivi", {
-            "fields": ("montant", "date_publication", "date_limite", "statut")
+        ("Dates et statut", {
+            "fields": ("date_publication", "date_limite", "statut")
+        }),
+        ("Source ARMP", {
+            "fields": ("source", "region", "reference_armp", "numero_armp", "url_source"),
+            "classes": ("collapse",)
+        }),
+        ("Métadonnées", {
+            "fields": ("cree_par", "date_creation", "date_import"),
+            "classes": ("collapse",)
         }),
     )
-
-    def prediction_ia(self, obj):
-        """Affiche la dernière prédiction IA enregistrée pour cet appel d'offres."""
-        log = obj.classifications.order_by("-date_prediction").first()
-        if log and log.secteur_predit:
-            return f"{log.secteur_predit.nom} ({log.confiance:.0%})"
-        return "—"
-    prediction_ia.short_description = "Prédiction IA"
-
-    def save_model(self, request, obj, form, change):
-        if not obj.cree_par_id:
-            obj.cree_par = request.user
-        super().save_model(request, obj, form, change)
-
-        # Classification automatique après sauvegarde
-        texte = f"{obj.titre} {obj.description}"
-        secteur_nom, confiance = predict_secteur(texte)
-
-        if secteur_nom:
-            secteur_predit = Secteur.objects.filter(nom=secteur_nom).first()
-            ClassificationLog.objects.create(
-                appel_offre=obj,
-                texte_source=texte,
-                secteur_predit=secteur_predit,
-                secteur_reel=obj.secteur,  # le choix humain sert de vérité terrain
-                confiance=confiance,
-            )
 
 
 @admin.register(ClassificationLog)
 class ClassificationLogAdmin(admin.ModelAdmin):
-    list_display = ("appel_offre", "secteur_predit", "secteur_reel", "confiance", "date_prediction")
+    list_display = ("id", "appel_offre", "secteur_predit", "secteur_reel", "confiance", "date_prediction")
     list_filter = ("secteur_predit", "secteur_reel")
+    search_fields = ("appel_offre__titre",)
     readonly_fields = ("date_prediction",)
+    date_hierarchy = "date_prediction"
+
+
+@admin.register(SynchronisationLog)
+class SynchronisationLogAdmin(admin.ModelAdmin):
+    list_display = ("date_sync", "statut", "nb_total_extraits", "nb_nouveaux", "nb_ignores", "duree_secondes")
+    list_filter = ("statut",)
+    readonly_fields = ("date_sync",)
+    date_hierarchy = "date_sync"
+    ordering = ("-date_sync",)
+
+
+# Personnalisation du titre de l'admin
+admin.site.site_header = "Région Atsimo-Andrefana — Administration"
+admin.site.site_title = "Admin Région Atsimo-Andrefana"
+admin.site.index_title = "Gestion des appels d'offres publics"
