@@ -76,6 +76,47 @@
             box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
         }
 
+        /* ============ FOOTER ============ */
+        .site-footer {
+            margin-top: 60px;
+            padding: 24px 0;
+            background: rgba(15, 23, 42, 0.95);
+            color: #94a3b8;
+            font-size: 0.82rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .site-footer .container-fluid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 0 24px;
+        }
+        .site-footer a {
+            color: #cbd5e1;
+            text-decoration: none;
+            transition: color 0.15s;
+        }
+        .site-footer a:hover {
+            color: #fff;
+        }
+        .site-footer .footer-admin {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 500;
+        }
+        .site-footer .footer-admin:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.5);
+            color: #93c5fd;
+        }
+
         /* ============ FOND IMAGE TOLIARA ============ */
         .page-background {
             position: fixed;
@@ -293,7 +334,27 @@
     </div>
 </div>
 
+<!-- CONTENU DES PAGES -->
 {% block content %}{% endblock %}
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+    <div class="container-fluid">
+        <div>
+            © 2026 <strong>Région Atsimo-Andrefana</strong> — Tous droits réservés
+        </div>
+        <div>
+            <a href="https://github.com/benjamin-tsenamada/region-appels-offres" target="_blank">
+                📦 Code source sur GitHub
+            </a>
+        </div>
+        <div>
+            <a href="/admin/" class="footer-admin">
+                ⚙️ Administration
+            </a>
+        </div>
+    </div>
+</footer>
 
 </body>
 </html>
