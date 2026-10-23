@@ -65,7 +65,7 @@
         </div>
     </div>
 
-    <!-- TABLEAU COMPACT -->
+    <!-- TABLEAU -->
     <div class="panel">
         <div style="padding: 0;">
             <div class="table-responsive">
@@ -81,7 +81,7 @@
                             <th>Pub.</th>
                             <th>Éch.</th>
                             <th>Statut</th>
-                            <th></th>
+                            <th style="text-align: center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -116,12 +116,20 @@
                                 {% elif ao.statut == "attribue" %}<span class="badge bg-success" style="font-size:0.65rem;">Attribué</span>
                                 {% else %}<span class="badge bg-secondary" style="font-size:0.65rem;">Infructueux</span>{% endif %}
                             </td>
-                            <td class="text-nowrap">
+                            <td class="text-nowrap" style="text-align: center;">
                                 <a href="{% url 'appels_offres:detail_appel' ao.pk %}"
                                    class="btn btn-sm btn-outline-primary"
                                    style="font-size:0.7rem; padding:2px 8px;">
                                     Détail
                                 </a>
+                                {% if ao.url_source %}
+                                    <a href="{{ ao.url_source }}" target="_blank"
+                                       class="btn btn-sm btn-outline-danger"
+                                       style="font-size:0.7rem; padding:2px 8px;"
+                                       title="Voir le PDF officiel sur l'ARMP">
+                                        📄 PDF
+                                    </a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% empty %}
