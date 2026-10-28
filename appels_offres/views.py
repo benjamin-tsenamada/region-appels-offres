@@ -1,24 +1,36 @@
 from datetime import date, timedelta
-import time
-
 from django.shortcuts import render, get_object_or_404, redirect
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Avg
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.utils import timezone
-
+from collections import Counter
 from .models import (
     AppelOffre, TypeProcedure, District, Region, Secteur,
-    ClassificationLog, SynchronisationLog
+    ClassificationLog, SynchronisationLog,
 )
 
 
-def _stats_communes(appels):
+# ============================================================
+# TABLEAU DE BORD
+# ============================================================
+
+def dashboard(request):
+    appels = AppelOffre.objects.all()
     total_ao = appels.count()
+    total_actifs = appels.exclude(statut__in=["attribue", "infructueux"]).count()
+    montant_total = appels.aggregate(total=Sum("montant"))["total"] or 0
+
     aujourd_hui = date.today()
     dans_7_jours = aujourd_hui + timedelta(days=7)
+    echeances_proches = appels.filter(
+        date_limite__gte=aujourd_hui,
+        date_limite__lte=dans_7_jours,
+    ).count()
+
+    total_aramp = appels.filter(source="ARMP").count()
 
     logs = ClassificationLog.objects.all()
     confiance_moyenne = 0.0
@@ -50,65 +62,122 @@ def _stats_communes(appels):
         .values("region").annotate(nb=Count("id")).order_by("-nb")[:10]
     )
 
-    return {
-        "total_ao": total_ao,
-        "total_actifs": appels.exclude(statut__in=["attribue", "infructueux"]).count(),
-        "total_aramp": appels.filter(source="ARMP").count(),
-        "montant_total": appels.aggregate(total=Sum("montant"))["total"] or 0,
-        "echeances_proches": appels.filter(date_limite__gte=aujourd_hui, date_limite__lte=dans_7_jours).count(),
-        "confiance_moyenne": confiance_moyenne,
-        "repartition_secteur": repartition_secteur,
-        "modes_repartition": modes_repartition,
-        "top_regions": top_regions,
-    }
-
-
-def dashboard(request):
-    appels = AppelOffre.objects.all()
-    stats = _stats_communes(appels)
-
     liste_appels = []
-    for ao in appels.order_by("-date_publication")[:8]:
+    for ao in appels.order_by("-date_publication")[:10]:
         log = ao.classifications.order_by("-date_prediction").first()
         liste_appels.append({
             "ao": ao,
             "prediction": log.secteur_predit.nom if log and log.secteur_predit else None,
             "confiance": round(log.confiance * 100) if log else None,
         })
-    stats["liste_appels"] = liste_appels
 
-    # Info synchronisation (dernière sync + temps écoulé)
     derniere_sync = SynchronisationLog.objects.filter(statut="succes").first()
-    stats["derniere_sync"] = derniere_sync
+    sync_texte = "jamais synchronisé"
+    sync_couleur = "red"
     if derniere_sync:
         delta = timezone.now() - derniere_sync.date_sync
         minutes = int(delta.total_seconds() / 60)
         if minutes < 1:
-            stats["sync_texte"] = "à l'instant"
-            stats["sync_couleur"] = "green"
+            sync_texte = "à l'instant"
+            sync_couleur = "green"
         elif minutes < 60:
-            stats["sync_texte"] = f"il y a {minutes} min"
-            stats["sync_couleur"] = "green"
-        elif minutes < 1440:
-            heures = minutes // 60
-            stats["sync_texte"] = f"il y a {heures} h"
-            stats["sync_couleur"] = "orange"
+            sync_texte = f"il y a {minutes} min"
+            sync_couleur = "green"
         else:
-            jours = minutes // 1440
-            stats["sync_texte"] = f"il y a {jours} j"
-            stats["sync_couleur"] = "red"
-    else:
-        stats["sync_texte"] = "jamais synchronisé"
-        stats["sync_couleur"] = "red"
+            heures = int(minutes / 60)
+            if heures < 24:
+                sync_texte = f"il y a {heures} h"
+                sync_couleur = "orange"
+            else:
+                jours = int(heures / 24)
+                sync_texte = f"il y a {jours} j"
+                sync_couleur = "red"
 
-    return render(request, "appels_offres/dashboard.html", stats)
+    contexte = {
+        "total_ao": total_ao,
+        "total_actifs": total_actifs,
+        "montant_total": montant_total,
+        "echeances_proches": echeances_proches,
+        "total_aramp": total_aramp,
+        "confiance_moyenne": confiance_moyenne,
+        "repartition_secteur": repartition_secteur,
+        "modes_repartition": modes_repartition,
+        "top_regions": top_regions,
+        "liste_appels": liste_appels,
+        "derniere_sync": derniere_sync,
+        "sync_texte": sync_texte,
+        "sync_couleur": sync_couleur,
+    }
+    return render(request, "appels_offres/dashboard.html", contexte)
 
+
+# ============================================================
+# STATISTIQUES
+# ============================================================
 
 def statistiques(request):
     appels = AppelOffre.objects.all()
-    stats = _stats_communes(appels)
-    return render(request, "appels_offres/statistiques.html", stats)
+    total_ao = appels.count()
 
+    repartition_regions = []
+    toutes_avec_region = appels.exclude(region__isnull=True).exclude(region="")
+    total_avec_region = toutes_avec_region.count()
+    if total_avec_region > 0:
+        compteur = Counter(toutes_avec_region.values_list("region", flat=True))
+        for region, nb in compteur.most_common():
+            repartition_regions.append({
+                "nom": region, "nb": nb,
+                "pourcentage": round(nb / total_avec_region * 100, 1),
+            })
+
+    top_5 = repartition_regions[:5]
+    max_nb = repartition_regions[0]["nb"] if repartition_regions else 0
+    max_region = repartition_regions[0]["nom"] if repartition_regions else "—"
+    moyenne = round(total_avec_region / len(repartition_regions), 1) if repartition_regions else 0
+
+    repartition_secteur = []
+    for s in Secteur.objects.all():
+        nb = appels.filter(secteur=s).count()
+        if nb > 0:
+            repartition_secteur.append({"nom": s.nom, "nombre": nb, "pourcentage": round(nb/total_ao*100, 1)})
+
+    modes_repartition = []
+    for mode in ["AOO", "AOR", "ACO", "AMI", "APQ"]:
+        nb = appels.filter(mode_passation=mode).count()
+        if nb > 0:
+            modes_repartition.append({"mode": mode, "nb": nb, "pourcentage": round(nb/total_ao*100, 1)})
+
+    logs = ClassificationLog.objects.all()
+    confiance_moyenne = 0.0
+    if logs.exists():
+        confiance_moyenne = round(sum(l.confiance for l in logs) / logs.count() * 100, 1)
+
+    contexte = {
+        "total_ao": total_ao,
+        "total_actifs": appels.exclude(statut__in=["attribue", "infructueux"]).count(),
+        "total_aramp": appels.filter(source="ARMP").count(),
+        "echeances_proches": appels.filter(
+            date_limite__gte=date.today(),
+            date_limite__lte=date.today() + timedelta(days=7)
+        ).count(),
+        "confiance_moyenne": confiance_moyenne,
+        "repartition_regions": repartition_regions,
+        "repartition_secteur": repartition_secteur,
+        "modes_repartition": modes_repartition,
+        "top_regions": top_regions,
+        "top_5": top_5,
+        "max_nb": max_nb,
+        "max_region": max_region,
+        "moyenne_par_region": moyenne,
+        "nb_regions": len(repartition_regions),
+        "total_avec_region": total_avec_region,
+    }
+    return render(request, "appels_offres/statistiques.html", contexte)
+
+
+# ============================================================
+# LISTE DES APPELS D'OFFRES
+# ============================================================
 
 def liste_appels(request):
     appels = AppelOffre.objects.select_related(
@@ -129,6 +198,7 @@ def liste_appels(request):
                  appels.filter(description__icontains=q) | \
                  appels.filter(autorite_contractante__icontains=q) | \
                  appels.filter(reference_armp__icontains=q)
+
     if secteur_id:
         appels = appels.filter(secteur_id=secteur_id)
     if region_nom:
@@ -165,6 +235,10 @@ def liste_appels(request):
     return render(request, "appels_offres/liste_appels.html", contexte)
 
 
+# ============================================================
+# DÉTAIL
+# ============================================================
+
 def detail_appel(request, pk):
     appel = get_object_or_404(
         AppelOffre.objects.select_related("secteur", "type_procedure", "district"), pk=pk
@@ -187,6 +261,10 @@ def corriger_prediction(request, classification_id):
         messages.success(request, "Correction enregistrée. Merci.")
     return redirect("appels_offres:detail_appel", pk=log.appel_offre.pk)
 
+
+# ============================================================
+# PERFORMANCE IA
+# ============================================================
 
 def performance_ia(request):
     toutes = ClassificationLog.objects.select_related("secteur_predit", "secteur_reel", "appel_offre")
@@ -217,34 +295,31 @@ def performance_ia(request):
     })
 
 
-def carte(request):
-    from collections import Counter
+# ============================================================
+# CARTE
+# ============================================================
 
-    # Répartition par région
-    repartition_regions = []
-    toutes_avec_region = AppelOffre.objects.exclude(region__isnull=True).exclude(region="")
+def carte(request):
+    appels = AppelOffre.objects.all()
+    toutes_avec_region = appels.exclude(region__isnull=True).exclude(region="")
     total_avec_region = toutes_avec_region.count()
 
+    repartition_regions = []
     if total_avec_region > 0:
         compteur = Counter(toutes_avec_region.values_list("region", flat=True))
         for region, nb in compteur.most_common():
             repartition_regions.append({
-                "nom": region,
-                "nb": nb,
+                "nom": region, "nb": nb,
                 "pourcentage": round(nb / total_avec_region * 100, 1),
             })
 
-    # Top 5
-    top_5 = repartition_regions[:5] if repartition_regions else []
-
-    # Statistiques générales
     max_nb = repartition_regions[0]["nb"] if repartition_regions else 0
     max_region = repartition_regions[0]["nom"] if repartition_regions else "—"
     moyenne = round(total_avec_region / len(repartition_regions), 1) if repartition_regions else 0
 
     contexte = {
         "repartition_regions": repartition_regions,
-        "top_5": top_5,
+        "top_5": repartition_regions[:5],
         "total_avec_region": total_avec_region,
         "max_nb": max_nb,
         "max_region": max_region,
@@ -255,26 +330,29 @@ def carte(request):
 
 
 def carte_data(request):
-    """Renvoie les données groupées par RÉGION (pas par district)."""
-    from .data_regions import COORDONNEES_REGIONS
-    from collections import Counter
-
-    # Compter les AO par région
-    compteur = Counter(
-        a.region for a in AppelOffre.objects.exclude(region__isnull=True).exclude(region="")
-        if a.region
-    )
-
     data = []
-    for region_nom, (lat, lng) in COORDONNEES_REGIONS.items():
-        nb = compteur.get(region_nom, 0)
+    for d in District.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True):
+        appels = AppelOffre.objects.filter(district=d)
+        liste_appels = [
+            {"titre": a.titre, "autorite": a.autorite_contractante, "statut": a.statut,
+             "region": a.region or "", "reference": a.reference_armp or "", "mode": a.mode_passation or ""}
+            for a in appels[:20]
+        ]
         data.append({
-            "nom": region_nom,
-            "lat": lat,
-            "lng": lng,
-            "nb_appels": nb,
+            "nom": d.nom,
+            "region": d.region.nom if d.region else "",
+            "lat": d.latitude, "lng": d.longitude,
+            "nb_appels": appels.count(),
+            "appels": liste_appels,
         })
+    return JsonResponse(data, safe=False)
 
+
+def regions_data(request):
+    """API : renvoie la répartition des AO par région (pour le refresh automatique de la carte)."""
+    toutes_avec_region = AppelOffre.objects.exclude(region__isnull=True).exclude(region="")
+    compteur = Counter(toutes_avec_region.values_list("region", flat=True))
+    data = [{"nom": region, "nb": nb} for region, nb in compteur.most_common()]
     return JsonResponse(data, safe=False)
 
 
@@ -283,39 +361,29 @@ def carte_data(request):
 # ============================================================
 
 def synchronisation(request):
-    """Page de synchronisation avec l'ARMP."""
-    historique = SynchronisationLog.objects.all()[:20]
     derniere_sync = SynchronisationLog.objects.filter(statut="succes").first()
-
-    contexte = {
-        "historique": historique,
+    historique = SynchronisationLog.objects.all()[:20]
+    return render(request, "appels_offres/synchronisation.html", {
         "derniere_sync": derniere_sync,
-        "total_ao": AppelOffre.objects.filter(source="ARMP").count(),
-        "total_ao_total": AppelOffre.objects.count(),
-    }
-    return render(request, "appels_offres/synchronisation.html", contexte)
+        "historique": historique,
+    })
 
 
-@require_POST
 def lancer_synchronisation(request):
-    """Lance le scraper ARMP et enregistre le résultat."""
+    """Lance une synchronisation manuelle avec l'ARMP."""
+    from datetime import datetime as dt
     from appels_offres.scrapers.armp import extraire_tous_les_ao
-    from datetime import datetime
+    from appels_offres.ml.classifier import predict_secteur
 
-    debut = time.time()
-
-    # Créer un log "en cours"
     log_sync = SynchronisationLog.objects.create(statut="en_cours")
+    debut = dt.now()
 
     try:
-        # Récupérer les AO depuis l'ARMP
         tous_les_ao = extraire_tous_les_ao()
         nb_total = len(tous_les_ao)
 
-        # Types de procédure en base
         types_proc = {t.code: t for t in TypeProcedure.objects.all()}
-
-        # Numéros déjà en base
+        secteurs_db = {s.nom.lower(): s for s in Secteur.objects.all()}
         numeros_existants = set(
             AppelOffre.objects.filter(source="ARMP").exclude(numero_armp__isnull=True)
             .values_list("numero_armp", flat=True)
@@ -334,9 +402,9 @@ def lancer_synchronisation(request):
             date_limite = None
             try:
                 if ao.get("date_debut"):
-                    date_publication = datetime.strptime(ao["date_debut"], "%Y-%m-%d").date()
+                    date_publication = dt.strptime(ao["date_debut"], "%Y-%m-%d").date()
                 if ao.get("date_fin"):
-                    date_limite = datetime.strptime(ao["date_fin"], "%Y-%m-%d").date()
+                    date_limite = dt.strptime(ao["date_fin"], "%Y-%m-%d").date()
             except (ValueError, TypeError):
                 pass
 
@@ -344,14 +412,12 @@ def lancer_synchronisation(request):
                 ignores += 1
                 continue
 
-            type_proc = types_proc.get(ao.get("mode", ""))
-
             try:
                 nouveau = AppelOffre.objects.create(
                     titre=ao.get("objet", "")[:500],
                     description=ao.get("objet", ""),
                     autorite_contractante=ao.get("entite", "")[:255],
-                    type_procedure=type_proc,
+                    type_procedure=types_proc.get(ao.get("mode", "")),
                     date_publication=date_publication,
                     date_limite=date_limite,
                     statut="publie",
@@ -366,28 +432,23 @@ def lancer_synchronisation(request):
                 if numero:
                     numeros_existants.add(numero)
 
-                # Classification automatique
-                from appels_offres.ml.classifier import predict_secteur
                 texte = f"{nouveau.titre} {nouveau.description}"
                 secteur_nom, confiance = predict_secteur(texte)
                 if secteur_nom:
-                    secteur_obj = Secteur.objects.filter(nom__iexact=secteur_nom).first()
+                    secteur_obj = secteurs_db.get(secteur_nom.lower())
                     if secteur_obj:
                         nouveau.secteur = secteur_obj
-                        nouveau.save(update_fields=["secteur"])
+                        nouveau.save()
                         ClassificationLog.objects.create(
                             appel_offre=nouveau,
                             texte_source=texte[:2000],
                             secteur_predit=secteur_obj,
                             confiance=confiance,
                         )
-
             except Exception:
                 ignores += 1
 
-        duree = round(time.time() - debut, 1)
-
-        # Mettre à jour le log
+        duree = (dt.now() - debut).total_seconds()
         log_sync.nb_total_extraits = nb_total
         log_sync.nb_nouveaux = crees
         log_sync.nb_ignores = ignores
@@ -396,13 +457,10 @@ def lancer_synchronisation(request):
         log_sync.message = f"Synchronisation réussie : {crees} nouveaux AO ajoutés"
         log_sync.save()
 
-        messages.success(
-            request,
-            f"✅ Synchronisation terminée : {crees} nouveaux AO ajoutés ({duree}s)"
-        )
+        messages.success(request, f"✅ Synchronisation réussie : {crees} nouveaux AO ajoutés")
 
     except Exception as e:
-        duree = round(time.time() - debut, 1)
+        duree = (dt.now() - debut).total_seconds()
         log_sync.statut = "echec"
         log_sync.duree_secondes = duree
         log_sync.message = f"Erreur : {str(e)[:500]}"

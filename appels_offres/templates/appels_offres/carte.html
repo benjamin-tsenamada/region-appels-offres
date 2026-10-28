@@ -38,21 +38,26 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
                     <div>
                         <strong style="font-size: 0.95rem; color: #0f172a;">📍 Nombre d'appels d'offres par région</strong>
-                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">La taille et la couleur indiquent le nombre d'AO</div>
+                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">
+                            Dernière actualisation : <span id="lastRefresh" style="color: #16a34a; font-weight: 600;">il y a 0 s</span>
+                        </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 14px; font-size: 0.8rem; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 5px;">
-                            <span style="width: 14px; height: 14px; background: #93c5fd; border-radius: 50%; border: 1px solid #fff;"></span> 1-20 AO
+                            <span style="width: 12px; height: 12px; background: #93c5fd; border-radius: 50%; border: 1px solid #fff;"></span> 1-20 AO
                         </div>
                         <div style="display: flex; align-items: center; gap: 5px;">
-                            <span style="width: 18px; height: 18px; background: #3b82f6; border-radius: 50%; border: 1px solid #fff;"></span> 21-50 AO
+                            <span style="width: 14px; height: 14px; background: #3b82f6; border-radius: 50%; border: 1px solid #fff;"></span> 21-50 AO
                         </div>
                         <div style="display: flex; align-items: center; gap: 5px;">
-                            <span style="width: 22px; height: 22px; background: #f59e0b; border-radius: 50%; border: 1px solid #fff;"></span> 51-100 AO
+                            <span style="width: 16px; height: 16px; background: #f59e0b; border-radius: 50%; border: 1px solid #fff;"></span> 51-100 AO
                         </div>
                         <div style="display: flex; align-items: center; gap: 5px;">
-                            <span style="width: 26px; height: 26px; background: #dc2626; border-radius: 50%; border: 1px solid #fff;"></span> 100+ AO
+                            <span style="width: 18px; height: 18px; background: #dc2626; border-radius: 50%; border: 1px solid #fff;"></span> 100+ AO
                         </div>
+                        <button onclick="refreshCarte()" style="background: #1e3a5f; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">
+                            🔄 Actualiser
+                        </button>
                     </div>
                 </div>
             </div>
@@ -191,7 +196,6 @@
         subdomains: 'abc',
     }).addTo(map);
 
-    // Coordonnées des chefs-lieux des 23 régions de Madagascar
     const COORDS_REGIONS = {
         "Analamanga": [-18.91, 47.525],
         "Vakinankaratra": [-19.8659, 47.0333],
@@ -219,14 +223,13 @@
     };
 
     function getColor(nb) {
-        if (nb <= 20) return '#93c5fd';      // bleu clair
-        if (nb <= 50) return '#3b82f6';      // bleu moyen
-        if (nb <= 100) return '#f59e0b';     // orange
-        return '#dc2626';                    // rouge
+        if (nb <= 20) return '#93c5fd';
+        if (nb <= 50) return '#3b82f6';
+        if (nb <= 100) return '#f59e0b';
+        return '#dc2626';
     }
 
-        function getRadius(nb) {
-        // Tailles très réduites : cercles discrets
+    function getRadius(nb) {
         const min = 2;
         const max = 8;
         const logMax = Math.log(600);
@@ -234,46 +237,88 @@
         return Math.min(min + (max - min) * (logNb / logMax), max);
     }
 
-    // Charger les données par région depuis le tableau repartition_regions
-    const dataRegions = [
+    let circleLayer = L.layerGroup().addTo(map);
+    let lastRefreshTime = Date.now();
+
+    function dessinerCercles(dataRegions) {
+        circleLayer.clearLayers();
+
+        dataRegions.forEach(r => {
+            const coords = COORDS_REGIONS[r.nom];
+            if (!coords || r.nb === 0) return;
+
+            const color = getColor(r.nb);
+            const radius = getRadius(r.nb);
+
+            const circle = L.circleMarker(coords, {
+                radius: radius,
+                fillColor: color,
+                color: '#ffffff',
+                weight: 1.5,
+                opacity: 1,
+                fillOpacity: 0.85,
+            });
+
+            let popup = `<div style="font-family: system-ui; min-width: 200px;">
+                <strong style="font-size: 1.05rem; color: #0f172a;">${r.nom}</strong><br>
+                <span style="display:inline-block; margin-top:8px; padding: 4px 10px; background: ${color}; color: #fff; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
+                    ${r.nb} appel(s) d'offres
+                </span><br>
+                <a href="/appels/?region=${encodeURIComponent(r.nom)}"
+                   style="display:inline-block; margin-top:10px; color: #1e3a5f; font-size: 0.8rem; text-decoration: underline;">
+                    Voir les AO →
+                </a>
+            </div>`;
+            circle.bindPopup(popup, { maxWidth: 300 });
+
+            circle.on({
+                mouseover: e => { e.target.setStyle({ weight: 3, color: '#0f172a' }); e.target.bringToFront(); },
+                mouseout: e => { e.target.setStyle({ weight: 1.5, color: '#ffffff' }); }
+            });
+
+            circleLayer.addLayer(circle);
+        });
+
+        lastRefreshTime = Date.now();
+        updateRefreshLabel();
+    }
+
+    function refreshCarte() {
+        fetch("/api/regions-data/")
+            .then(r => r.json())
+            .then(data => {
+                dessinerCercles(data);
+                console.log(`[Carte] ${data.length} régions actualisées à ${new Date().toLocaleTimeString()}`);
+            })
+            .catch(err => console.error("Erreur refresh:", err));
+    }
+
+    function updateRefreshLabel() {
+        const sec = Math.floor((Date.now() - lastRefreshTime) / 1000);
+        const el = document.getElementById('lastRefresh');
+        if (!el) return;
+        if (sec < 60) {
+            el.textContent = `il y a ${sec} s`;
+        } else {
+            el.textContent = `il y a ${Math.floor(sec / 60)} min`;
+        }
+    }
+
+    // Chargement initial
+    const dataRegionsInitial = [
         {% for r in repartition_regions %}
         {nom: "{{ r.nom|escapejs }}", nb: {{ r.nb }}},
         {% endfor %}
     ];
+    dessinerCercles(dataRegionsInitial);
 
-    dataRegions.forEach(r => {
-        const coords = COORDS_REGIONS[r.nom];
-        if (!coords) return;
+    // Auto-refresh toutes les 30 secondes
+    setInterval(() => {
+        refreshCarte();
+    }, 30000);
 
-        const color = getColor(r.nb);
-        const radius = getRadius(r.nb);
-
-        const circle = L.circleMarker(coords, {
-            radius: radius,
-            fillColor: color,
-            color: '#ffffff',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.85,
-        }).addTo(map);
-
-        let popup = `<div style="font-family: system-ui; min-width: 200px;">
-            <strong style="font-size: 1.1rem; color: #0f172a;">${r.nom}</strong><br>
-            <span style="display:inline-block; margin-top:8px; padding: 4px 10px; background: ${color}; color: #fff; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
-                ${r.nb} appel(s) d'offres
-            </span><br>
-            <a href="/appels/?region=${encodeURIComponent(r.nom)}"
-               style="display:inline-block; margin-top:10px; color: #1e3a5f; font-size: 0.8rem; text-decoration: underline;">
-                Voir les AO de cette région →
-            </a>
-        </div>`;
-        circle.bindPopup(popup, { maxWidth: 300 });
-
-        circle.on({
-            mouseover: e => { e.target.setStyle({ weight: 4, color: '#0f172a' }); e.target.bringToFront(); },
-            mouseout: e => { e.target.setStyle({ weight: 2, color: '#ffffff' }); }
-        });
-    });
+    // Mise à jour du compteur "il y a X secondes"
+    setInterval(updateRefreshLabel, 5000);
 
     document.getElementById('tab-carte-btn').addEventListener('shown.bs.tab', function() {
         map.invalidateSize();
