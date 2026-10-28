@@ -218,25 +218,63 @@ def performance_ia(request):
 
 
 def carte(request):
-    return render(request, "appels_offres/carte.html")
+    from collections import Counter
+
+    # Répartition par région
+    repartition_regions = []
+    toutes_avec_region = AppelOffre.objects.exclude(region__isnull=True).exclude(region="")
+    total_avec_region = toutes_avec_region.count()
+
+    if total_avec_region > 0:
+        compteur = Counter(toutes_avec_region.values_list("region", flat=True))
+        for region, nb in compteur.most_common():
+            repartition_regions.append({
+                "nom": region,
+                "nb": nb,
+                "pourcentage": round(nb / total_avec_region * 100, 1),
+            })
+
+    # Top 5
+    top_5 = repartition_regions[:5] if repartition_regions else []
+
+    # Statistiques générales
+    max_nb = repartition_regions[0]["nb"] if repartition_regions else 0
+    max_region = repartition_regions[0]["nom"] if repartition_regions else "—"
+    moyenne = round(total_avec_region / len(repartition_regions), 1) if repartition_regions else 0
+
+    contexte = {
+        "repartition_regions": repartition_regions,
+        "top_5": top_5,
+        "total_avec_region": total_avec_region,
+        "max_nb": max_nb,
+        "max_region": max_region,
+        "moyenne_par_region": moyenne,
+        "nb_regions": len(repartition_regions),
+    }
+    return render(request, "appels_offres/carte.html", contexte)
 
 
 def carte_data(request):
+    """Renvoie les données groupées par RÉGION (pas par district)."""
+    from .data_regions import COORDONNEES_REGIONS
+    from collections import Counter
+
+    # Compter les AO par région
+    compteur = Counter(
+        a.region for a in AppelOffre.objects.exclude(region__isnull=True).exclude(region="")
+        if a.region
+    )
+
     data = []
-    for d in District.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True):
-        appels = AppelOffre.objects.filter(district=d)
-        liste_appels = [
-            {"titre": a.titre, "autorite": a.autorite_contractante, "statut": a.statut,
-             "region": a.region or "", "reference": a.reference_armp or "", "mode": a.mode_passation or ""}
-            for a in appels[:20]
-        ]
+    for region_nom, (lat, lng) in COORDONNEES_REGIONS.items():
+        nb = compteur.get(region_nom, 0)
         data.append({
-            "nom": d.nom,
-            "region": d.region.nom if d.region else "",
-            "lat": d.latitude, "lng": d.longitude,
-            "nb_appels": appels.count(),
-            "appels": liste_appels,
+            "nom": region_nom,
+            "lat": lat,
+            "lng": lng,
+            "nb_appels": nb,
         })
+
     return JsonResponse(data, safe=False)
 
 

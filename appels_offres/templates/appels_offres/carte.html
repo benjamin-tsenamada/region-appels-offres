@@ -1,39 +1,177 @@
 {% extends "appels_offres/base.html" %}
-{% block title %}Carte des districts - Région Atsimo-Andrefana{% endblock %}
+{% block title %}Répartition géographique - Région Atsimo-Andrefana{% endblock %}
 
 {% block content %}
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 <div class="page-header">
     <div class="container">
-        <h1>🗺️ Carte des appels d'offres par district</h1>
-        <p class="sub">Visualisation géographique — <strong>{{ total_districts_actifs }}</strong> districts sur 119 ont actuellement des appels d'offres actifs</p>
+        <h1>🗺️ Répartition géographique des appels d'offres</h1>
+        <p class="sub">Visualisation cartographique et statistique des <strong>{{ total_avec_region }}</strong> appels d'offres par région</p>
     </div>
 </div>
 
-<div class="container-fluid px-3 mb-3">
-    <div class="panel" style="overflow: hidden;">
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-        <div id="map" style="height: 75vh; width: 100%;"></div>
-    </div>
-</div>
+<div class="container">
 
-<!-- Légende -->
-<div class="container mb-4">
-    <div class="panel p-3">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-            <div>
-                <strong style="font-size: 0.95rem; color: #0f172a;">📍 Nombre d'appels d'offres par district</strong>
-                <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">Cliquez sur un cercle pour voir les AO</div>
+    <ul class="nav nav-tabs mb-3" id="carteTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0;">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-carte-btn" data-bs-toggle="tab" data-bs-target="#tab-carte" type="button" role="tab" style="color: #0f172a; font-weight: 600; border: none; border-bottom: 3px solid #1e3a5f;">
+                🗺️ Carte interactive
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-stats-btn" data-bs-toggle="tab" data-bs-target="#tab-stats" type="button" role="tab" style="color: #64748b; font-weight: 600; border: none;">
+                📊 Statistiques par région
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="carteTabsContent">
+
+        <div class="tab-pane fade show active" id="tab-carte" role="tabpanel">
+            <div class="panel mb-3" style="overflow: hidden;">
+                <div id="map" style="height: 70vh; width: 100%;"></div>
             </div>
-            <div style="display: flex; align-items: center; gap: 14px; font-size: 0.8rem; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="width: 14px; height: 14px; background: #60a5fa; border-radius: 50%; border: 1px solid #fff;"></span> 1 AO
+
+            <div class="panel p-3 mb-4">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <strong style="font-size: 0.95rem; color: #0f172a;">📍 Nombre d'appels d'offres par région</strong>
+                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">La taille et la couleur indiquent le nombre d'AO</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 14px; font-size: 0.8rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 14px; height: 14px; background: #93c5fd; border-radius: 50%; border: 1px solid #fff;"></span> 1-20 AO
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 18px; height: 18px; background: #3b82f6; border-radius: 50%; border: 1px solid #fff;"></span> 21-50 AO
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 22px; height: 22px; background: #f59e0b; border-radius: 50%; border: 1px solid #fff;"></span> 51-100 AO
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span style="width: 26px; height: 26px; background: #dc2626; border-radius: 50%; border: 1px solid #fff;"></span> 100+ AO
+                        </div>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="width: 18px; height: 18px; background: #f59e0b; border-radius: 50%; border: 1px solid #fff;"></span> 2-4 AO
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-stats" role="tabpanel">
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card blue">
+                        <div class="stat-icon">📍</div>
+                        <div class="stat-label">Régions couvertes</div>
+                        <p class="stat-value blue">{{ nb_regions }}</p>
+                        <div class="stat-sub">sur 23 au total</div>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <span style="width: 24px; height: 24px; background: #dc2626; border-radius: 50%; border: 1px solid #fff;"></span> 5+ AO
+                <div class="col-md-3">
+                    <div class="stat-card orange">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-label">Région la plus active</div>
+                        <p class="stat-value orange" style="font-size: 1.2rem;">{{ max_region }}</p>
+                        <div class="stat-sub">{{ max_nb }} AO</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card green">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-label">Moyenne par région</div>
+                        <p class="stat-value green">{{ moyenne_par_region }}</p>
+                        <div class="stat-sub">AO / région</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card purple">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-label">Total AO localisés</div>
+                        <p class="stat-value purple">{{ total_avec_region }}</p>
+                        <div class="stat-sub">avec région renseignée</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-8">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h5>📊 Répartition détaillée par région</h5>
+                        </div>
+                        <div style="padding: 0;">
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="padding-left: 18px; width: 40px;">#</th>
+                                            <th>Région</th>
+                                            <th style="width: 80px;" class="text-end">AO</th>
+                                            <th style="width: 80px;" class="text-end">%</th>
+                                            <th style="padding-right: 18px;">Répartition</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for r in repartition_regions %}
+                                        <tr>
+                                            <td style="padding-left: 18px; color: #94a3b8; font-weight: 600;">{{ forloop.counter }}</td>
+                                            <td>
+                                                <a href="{% url 'appels_offres:liste_appels' %}?region={{ r.nom|urlencode }}"
+                                                   style="color: #0f172a; text-decoration: none; font-weight: 500;">
+                                                    {{ r.nom }}
+                                                </a>
+                                            </td>
+                                            <td class="text-end"><strong>{{ r.nb }}</strong></td>
+                                            <td class="text-end"><span style="color: #64748b; font-size: 0.85rem;">{{ r.pourcentage }}%</span></td>
+                                            <td style="padding-right: 18px;">
+                                                <div style="background: #e2e8f0; border-radius: 6px; height: 8px; overflow: hidden;">
+                                                    <div style="
+                                                        background: {% if forloop.counter == 1 %}#dc2626{% elif forloop.counter <= 3 %}#f59e0b{% elif forloop.counter <= 10 %}#60a5fa{% else %}#94a3b8{% endif %};
+                                                        height: 100%; width: {{ r.pourcentage }}%; border-radius: 6px;
+                                                    "></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h5>🏆 Top 5 régions</h5>
+                        </div>
+                        <div class="panel-body">
+                            {% for r in top_5 %}
+                            <div style="padding: 12px 0; border-bottom: 1px solid #f1f5f9; {% if forloop.last %}border-bottom: none;{% endif %}">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="
+                                            width: 26px; height: 26px;
+                                            background: {% if forloop.counter == 1 %}#fef3c7{% elif forloop.counter == 2 %}#e0e7ff{% elif forloop.counter == 3 %}#fed7aa{% else %}#f1f5f9{% endif %};
+                                            color: {% if forloop.counter == 1 %}#92400e{% elif forloop.counter == 2 %}#3730a3{% elif forloop.counter == 3 %}#9a3412{% else %}#475569{% endif %};
+                                            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                                            font-weight: 700; font-size: 0.75rem;
+                                        ">{{ forloop.counter }}</span>
+                                        <strong style="font-size: 0.9rem;">{{ r.nom }}</strong>
+                                    </div>
+                                    <span style="font-weight: 700; color: #0f172a;">{{ r.nb }}</span>
+                                </div>
+                                <div style="background: #e2e8f0; border-radius: 6px; height: 6px; overflow: hidden; margin-left: 34px;">
+                                    <div style="
+                                        background: {% if forloop.counter == 1 %}#dc2626{% elif forloop.counter == 2 %}#f59e0b{% else %}#60a5fa{% endif %};
+                                        height: 100%; width: {{ r.pourcentage }}%; border-radius: 6px;
+                                    "></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -42,98 +180,104 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Carte centrée sur Madagascar avec limites
     const map = L.map('map', {
         maxBounds: [[-28, 40], [-10, 52]],
         maxBoundsViscosity: 1.0
     }).setView([-19.0, 46.5], 6);
 
-    // Fond de carte épuré (sans frontières noires épaisses)
-                L.tileLayer('https://tile-a.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors, tiles HOT',
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap France',
         maxZoom: 19,
+        subdomains: 'abc',
     }).addTo(map);
 
-    // Fonction de couleur adaptée aux vraies données ARMP
+    // Coordonnées des chefs-lieux des 23 régions de Madagascar
+    const COORDS_REGIONS = {
+        "Analamanga": [-18.91, 47.525],
+        "Vakinankaratra": [-19.8659, 47.0333],
+        "Itasy": [-18.95, 46.9],
+        "Bongolava": [-18.7667, 46.0333],
+        "Vatovavy": [-21.2333, 48.3333],
+        "Fitovinany": [-22.15, 48.0],
+        "Amoron'i Mania": [-20.5333, 47.25],
+        "Haute Matsiatra": [-21.4333, 47.0833],
+        "Atsimo-Atsinanana": [-22.8167, 47.8333],
+        "Ihorombe": [-22.4, 46.1167],
+        "Menabe": [-20.2833, 44.2833],
+        "Atsimo-Andrefana": [-23.356, 43.6667],
+        "Androy": [-25.1667, 46.0833],
+        "Anosy": [-25.0333, 46.9833],
+        "Sava": [-14.2667, 50.1667],
+        "Diana": [-12.3, 49.2833],
+        "Sofia": [-14.8667, 47.9833],
+        "Boeny": [-15.7167, 46.3167],
+        "Betsiboka": [-16.95, 46.8333],
+        "Melaky": [-18.0667, 44.0333],
+        "Alaotra-Mangoro": [-17.8333, 48.4167],
+        "Atsinanana": [-18.15, 49.4167],
+        "Analanjirofo": [-17.3833, 49.4],
+    };
+
     function getColor(nb) {
-        if (nb === 1) return '#60a5fa';   // bleu - 1 AO
-        if (nb <= 4) return '#f59e0b';    // orange - 2 à 4 AO
-        return '#dc2626';                 // rouge - 5+ AO
+        if (nb <= 20) return '#93c5fd';      // bleu clair
+        if (nb <= 50) return '#3b82f6';      // bleu moyen
+        if (nb <= 100) return '#f59e0b';     // orange
+        return '#dc2626';                    // rouge
     }
 
-    // Fonction de rayon
-    function getRadius(nb) {
-        if (nb === 1) return 10;
-        if (nb <= 4) return 14;
-        return 20;
+        function getRadius(nb) {
+        // Tailles très réduites : cercles discrets
+        const min = 2;
+        const max = 8;
+        const logMax = Math.log(600);
+        const logNb = Math.log(Math.max(nb, 1));
+        return Math.min(min + (max - min) * (logNb / logMax), max);
     }
 
-    // Charger les données
-    fetch("/api/carte-data/")
-    .then(response => response.json())
-    .then(data => {
+    // Charger les données par région depuis le tableau repartition_regions
+    const dataRegions = [
+        {% for r in repartition_regions %}
+        {nom: "{{ r.nom|escapejs }}", nb: {{ r.nb }}},
+        {% endfor %}
+    ];
 
-        // On ne garde QUE les districts avec au moins 1 AO
-        const dataFiltrees = data.filter(d => d.nb_appels > 0);
+    dataRegions.forEach(r => {
+        const coords = COORDS_REGIONS[r.nom];
+        if (!coords) return;
 
-        // Trier pour afficher les gros cercles au-dessus
-        dataFiltrees.sort((a, b) => a.nb_appels - b.nb_appels);
+        const color = getColor(r.nb);
+        const radius = getRadius(r.nb);
 
-        dataFiltrees.forEach(d => {
-            const nb = d.nb_appels;
-            const color = getColor(nb);
-            const radius = getRadius(nb);
+        const circle = L.circleMarker(coords, {
+            radius: radius,
+            fillColor: color,
+            color: '#ffffff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.85,
+        }).addTo(map);
 
-            const circle = L.circleMarker([d.lat, d.lng], {
-                radius: radius,
-                fillColor: color,
-                color: '#ffffff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.9,
-            }).addTo(map);
+        let popup = `<div style="font-family: system-ui; min-width: 200px;">
+            <strong style="font-size: 1.1rem; color: #0f172a;">${r.nom}</strong><br>
+            <span style="display:inline-block; margin-top:8px; padding: 4px 10px; background: ${color}; color: #fff; border-radius: 6px; font-size: 0.85rem; font-weight: 600;">
+                ${r.nb} appel(s) d'offres
+            </span><br>
+            <a href="/appels/?region=${encodeURIComponent(r.nom)}"
+               style="display:inline-block; margin-top:10px; color: #1e3a5f; font-size: 0.8rem; text-decoration: underline;">
+                Voir les AO de cette région →
+            </a>
+        </div>`;
+        circle.bindPopup(popup, { maxWidth: 300 });
 
-            // Contenu de la popup
-            let popupContent = `<div style="font-family: system-ui; min-width: 240px;">
-                <strong style="font-size: 1.05rem; color: #0f172a;">${d.nom}</strong><br>
-                <small style="color: #64748b;">${d.region || ''}</small><br>
-                <span style="display:inline-block; margin-top:8px; padding: 4px 10px; background: ${color}; color: #fff; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
-                    ${nb} appel(s) d'offres
-                </span>`;
-
-            if (d.appels.length > 0) {
-                popupContent += `<hr style="margin: 10px 0; border-color: #e2e8f0;">`;
-                d.appels.slice(0, 5).forEach(a => {
-                    popupContent += `<div style="font-size: 0.78rem; padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
-                        <strong>${a.titre.substring(0, 75)}...</strong><br>
-                        <span style="color: #64748b;">${a.autorite.substring(0, 50)}</span>
-                        ${a.mode ? '<span style="background:#0f172a; color:#fff; padding:1px 6px; border-radius:3px; font-size:0.68rem; margin-left:4px;">' + a.mode + '</span>' : ''}
-                    </div>`;
-                });
-                if (d.appels.length > 5) {
-                    popupContent += `<div style="font-size: 0.75rem; color: #64748b; padding-top: 6px;">... et ${d.appels.length - 5} autre(s)</div>`;
-                }
-            }
-            popupContent += `</div>`;
-
-            circle.bindPopup(popupContent, { maxWidth: 380 });
-
-            // Effet de survol
-            circle.on({
-                mouseover: function(e) {
-                    e.target.setStyle({ weight: 4, color: '#0f172a' });
-                    e.target.bringToFront();
-                },
-                mouseout: function(e) {
-                    e.target.setStyle({ weight: 2, color: '#ffffff' });
-                }
-            });
+        circle.on({
+            mouseover: e => { e.target.setStyle({ weight: 4, color: '#0f172a' }); e.target.bringToFront(); },
+            mouseout: e => { e.target.setStyle({ weight: 2, color: '#ffffff' }); }
         });
+    });
 
-        // Vue fixe centrée sur Madagascar
-        map.setView([-19.0, 46.5], 6);
-    })
-    .catch(err => console.error("Erreur chargement carte :", err));
+    document.getElementById('tab-carte-btn').addEventListener('shown.bs.tab', function() {
+        map.invalidateSize();
+    });
 </script>
 
 {% endblock %}
