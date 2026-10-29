@@ -131,6 +131,7 @@ def statistiques(request):
             })
 
     top_5 = repartition_regions[:5]
+    top_regions = repartition_regions[:10]  # <--- LA CORRECTION EST ICI
     max_nb = repartition_regions[0]["nb"] if repartition_regions else 0
     max_region = repartition_regions[0]["nom"] if repartition_regions else "—"
     moyenne = round(total_avec_region / len(repartition_regions), 1) if repartition_regions else 0
