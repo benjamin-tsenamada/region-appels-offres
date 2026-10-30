@@ -28,7 +28,8 @@
                                     font-weight: 700; font-size: 0.75rem; margin-right: 10px;">
                             {{ forloop.counter }}
                         </div>
-                        <div style="flex: 1; font-weight: 500; font-size: 0.88rem;">{{ r.region }}</div>
+                        <!-- C'EST ICI QUE LA CORRECTION EST FAITE : r.region -> r.nom -->
+                        <div style="flex: 1; font-weight: 500; font-size: 0.88rem;">{{ r.nom }}</div>
                         <div style="font-weight: 700; color: #0f172a; font-size: 0.88rem;">{{ r.nb }} AO</div>
                     </div>
                     {% empty %}
