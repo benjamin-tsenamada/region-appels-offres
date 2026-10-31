@@ -18,16 +18,27 @@
             min-height: 100vh;
         }
 
+        /* Fond Toliara éclairci */
+        .page-background {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: linear-gradient(rgba(15, 23, 42, 0.55), rgba(15, 23, 42, 0.65)),
+                        url("{% static 'images/toliara.jpg' %}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
         /* ============ STICKY NAVBAR ============ */
         .navbar-sticky {
             position: fixed;
             top: 0; left: 0; right: 0;
             z-index: 1000;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 12px 0;
-            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: #0f172a;
+            padding: 8px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         .navbar-sticky .container-fluid {
             display: flex;
@@ -40,34 +51,41 @@
             font-size: 1.05rem;
             font-weight: 700;
             text-decoration: none;
-            letter-spacing: -0.3px;
-            white-space: nowrap;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px; /* Espace entre le logo et le texte */
         }
-        .navbar-sticky .brand:hover { color: #fff; }
-
+        
+        /* PETIT LOGO À GAUCHE */
+        .navbar-sticky .nav-logo-left {
+            height: 40px;
+            width: auto;
+            background: white;
+            border-radius: 50%;
+            padding: 2px;
+            border: 2px solid #cbd5e1;
+        }
+        
         .navbar-sticky .nav-links {
             display: flex;
             gap: 6px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .navbar-sticky .nav-links a {
             color: #cbd5e1;
             text-decoration: none;
             font-size: 0.85rem;
             font-weight: 500;
-            padding: 7px 16px;
+            padding: 8px 16px;
             border-radius: 20px;
             border: 1px solid transparent;
             transition: all 0.2s;
             white-space: nowrap;
         }
         .navbar-sticky .nav-links a:hover {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.1);
             color: #fff;
-            border-color: rgba(255, 255, 255, 0.15);
         }
         .navbar-sticky .nav-links a.active {
             background: rgba(59, 130, 246, 0.2);
@@ -76,285 +94,156 @@
             box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
         }
 
-        /* ============ FOOTER ============ */
-        .site-footer {
-            margin-top: 60px;
-            padding: 24px 0;
-            background: rgba(15, 23, 42, 0.95);
-            color: #94a3b8;
-            font-size: 0.82rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .site-footer .container-fluid {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            padding: 0 24px;
-        }
-        .site-footer a {
-            color: #cbd5e1;
-            text-decoration: none;
-            transition: color 0.15s;
-        }
-        .site-footer a:hover {
-            color: #fff;
-        }
-        .site-footer .footer-admin {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            font-weight: 500;
-        }
-        .site-footer .footer-admin:hover {
-            background: rgba(59, 130, 246, 0.15);
-            border-color: rgba(59, 130, 246, 0.5);
-            color: #93c5fd;
-        }
-
-        /* ============ FOND IMAGE TOLIARA ============ */
-        .page-background {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: -1;
-            background: linear-gradient(rgba(241, 245, 249, 0.92), rgba(241, 245, 249, 0.95)),
-                        url("{% static 'images/toliara.jpg' %}");
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-
-        /* ============ HERO ============ */
-        .hero {
-            position: relative;
-            padding: 60px 0 70px 0;
-            color: #fff;
-            background: linear-gradient(120deg, rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.85)),
-                        url("{% static 'images/toliara.jpg' %}");
-            background-size: cover;
-            background-position: center 30%;
-            margin-top: -76px;
-            padding-top: 136px;
-        }
-        .hero::after {
-            content: "";
-            position: absolute; bottom: 0; left: 0; right: 0;
-            height: 80px;
-            background: linear-gradient(to top, #f1f5f9, transparent);
-            pointer-events: none;
-        }
-        .hero .brand {
-            font-size: 2rem;
-            font-weight: 800;
-            margin: 0 0 8px 0;
-            letter-spacing: -0.5px;
-            text-shadow: 0 3px 12px rgba(0,0,0,0.5);
-        }
-        .hero .subtitle {
-            font-size: 1.05rem;
-            color: #e2e8f0;
-            margin: 0;
-            font-weight: 400;
-        }
-
-        /* ============ EN-TÊTE DE PAGE ============ */
+        /* =========================================
+           EN-TÊTE DE PAGE (Fond transparent)
+           ========================================= */
         .page-header {
-            background: linear-gradient(120deg, rgba(30, 58, 95, 0.95), rgba(15, 23, 42, 0.95));
-            color: #fff;
-            padding: 30px 0;
-            margin-bottom: 24px;
-            border-radius: 0 0 16px 16px;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+            background: transparent;
+            padding: 20px 0 30px 0;
+            margin-bottom: 20px;
+            text-align: center;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         }
         .page-header h1 {
-            margin: 0; font-size: 1.5rem; font-weight: 700;
+            margin: 0; 
+            font-size: 2rem; 
+            font-weight: 800; 
         }
         .page-header .sub {
-            font-size: 0.9rem; color: #cbd5e1; margin-top: 6px;
+            font-size: 1.05rem; 
+            color: #e2e8f0; 
+            margin-top: 8px;
+        }
+
+        /* =========================================
+           GROS LOGO CENTRAL AVEC ANIMATION
+           ========================================= */
+        .page-header-logo {
+            height: 100px; /* Taille du grand logo */
+            width: auto;
+            margin-bottom: 15px;
+            background: white;
+            border-radius: 50%;
+            padding: 4px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            animation: flotter 3s ease-in-out infinite; /* L'animation est ici */
+        }
+
+        /* Définition de l'animation (flottement) */
+        @keyframes flotter {
+            0% { transform: translateY(0px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+            50% { transform: translateY(-12px); box-shadow: 0 15px 25px rgba(0,0,0,0.3); }
+            100% { transform: translateY(0px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
         }
 
         /* ============ CARTES STATS ============ */
         .stat-card {
-            background: #fff;
+            background: #ffffff;
             border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
-            border: 1px solid #e2e8f0;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border: none;
             height: 100%;
             position: relative;
             overflow: hidden;
-            transition: transform 0.15s, box-shadow 0.15s;
+            transition: transform 0.15s;
         }
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-        }
+        .stat-card:hover { transform: translateY(-3px); }
         .stat-card::before {
-            content: "";
-            position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
         }
         .stat-card.blue::before   { background: #1e3a5f; }
         .stat-card.orange::before { background: #ea580c; }
         .stat-card.green::before  { background: #16a34a; }
         .stat-card.purple::before { background: #7c3aed; }
 
-        .stat-icon { font-size: 1.4rem; margin-bottom: 4px; display: inline-block; }
-        .stat-label {
-            font-size: 0.7rem; text-transform: uppercase;
-            letter-spacing: 0.6px; color: #64748b;
-            font-weight: 600; margin-bottom: 2px;
-        }
-        .stat-value {
-            font-size: 1.9rem; font-weight: 800;
-            color: #0f172a; margin: 0; line-height: 1.1;
-        }
+        .stat-icon { font-size: 1.5rem; margin-bottom: 6px; display: inline-block; }
+        .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.6px; color: #64748b; font-weight: 700; margin-bottom: 4px; }
+        .stat-value { font-size: 2rem; font-weight: 800; margin: 0; line-height: 1.1; }
         .stat-value.blue   { color: #1e3a5f; }
         .stat-value.orange { color: #ea580c; }
         .stat-value.green  { color: #16a34a; }
         .stat-value.purple { color: #7c3aed; }
-        .stat-sub { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
+        .stat-sub { font-size: 0.75rem; color: #64748b; margin-top: 6px; }
 
         /* ============ PANEL ============ */
         .panel {
-            background: rgba(255, 255, 255, 0.98);
+            background: #ffffff;
             border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+            border: none;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
             overflow: hidden;
             height: 100%;
-            backdrop-filter: blur(4px);
         }
         .panel-header {
-            padding: 12px 18px;
+            padding: 14px 20px;
             border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(248, 250, 252, 0.5);
+            background: #f8fafc;
         }
-        .panel-header h5 {
-            margin: 0; font-size: 0.95rem;
-            font-weight: 700; color: #0f172a;
-        }
-        .panel-header .link {
-            font-size: 0.78rem; color: #1e3a5f;
-            text-decoration: none; font-weight: 500;
-        }
-        .panel-header .link:hover { text-decoration: underline; }
-        .panel-body { padding: 14px 18px; }
+        .panel-header h5 { margin: 0; font-size: 1rem; font-weight: 700; color: #0f172a; }
+        .panel-body { padding: 16px 20px; }
 
-        /* ============ TABLEAU COMPACT ============ */
-        .table { margin: 0; font-size: 0.82rem; }
+        /* ============ TABLEAUX & BADGES ============ */
+        .table { margin: 0; font-size: 0.85rem; }
         .table thead th {
             color: #64748b; font-weight: 600;
-            font-size: 0.68rem; text-transform: uppercase;
+            font-size: 0.75rem; text-transform: uppercase;
             letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0;
-            padding: 7px 6px; background: #f8fafc;
+            padding: 10px 8px; background: #f1f5f9;
             white-space: nowrap;
         }
         .table tbody td {
-            padding: 7px 6px;
+            padding: 12px 8px;
             vertical-align: middle;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 0.8rem;
-            line-height: 1.3;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.85rem;
         }
-        .table tbody tr:last-child td { border-bottom: none; }
-        .table tbody tr:hover { background: #f8fafc; }
+        
+        .badge-secteur { font-size: 0.7rem; font-weight: 600; padding: 4px 8px; border-radius: 4px; }
+        .badge-region { font-size: 0.7rem; padding: 4px 8px; background: #e0e7ff; color: #3730a3; border-radius: 4px; font-weight: 600; }
+        .badge-mode { font-size: 0.7rem; padding: 4px 8px; background: #0f172a; color: #fff; border-radius: 4px; font-weight: 600; }
+        .ref-text { font-size: 0.75rem; color: #64748b; font-family: monospace; }
+        .date-badge { font-size: 0.75rem; background: #fef3c7; color: #78350f; padding: 4px 8px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
 
-        /* ============ BADGES ============ */
-        .badge-secteur {
-            font-size: 0.68rem; font-weight: 500;
-            padding: 2px 6px; border-radius: 4px;
-        }
-        .badge-region {
-            font-size: 0.68rem; padding: 2px 6px;
-            background: #e0e7ff; color: #3730a3;
-            border-radius: 4px; font-weight: 500;
-        }
-        .badge-mode {
-            font-size: 0.65rem; padding: 2px 6px;
-            background: #0f172a; color: #fff;
-            border-radius: 4px; font-weight: 600;
-        }
-        .ref-text {
-            font-size: 0.7rem; color: #64748b;
-            font-family: monospace;
-        }
-        .date-badge {
-            font-size: 0.72rem; background: #fef3c7;
-            color: #78350f; padding: 2px 6px;
-            border-radius: 4px; font-weight: 500;
-            white-space: nowrap;
+        .region-header-row {
+            background-color: #dbeafe !important;
+            color: #1e3a8a;
+            font-weight: bold;
+            font-size: 1rem;
+            text-align: center;
+            padding: 12px !important;
+            border-top: 2px solid #93c5fd;
+            border-bottom: 2px solid #93c5fd;
         }
     </style>
 </head>
 <body>
 
-<!-- FOND IMAGE TOLIARA -->
 <div class="page-background"></div>
 
-<!-- BARRE STICKY -->
 <div class="navbar-sticky">
     <div class="container-fluid px-4">
         <a href="{% url 'appels_offres:dashboard' %}" class="brand">
-            🏛️ Région Atsimo-Andrefana
+            <!-- LOGO PLACÉ À GAUCHE ICI -->
+            <img src="{% static 'images/logo_region.jpg' %}" alt="Logo" class="nav-logo-left" onerror="this.style.display='none'">
+            Région Atsimo-Andrefana
         </a>
         <div class="nav-links">
-            <a href="{% url 'appels_offres:dashboard' %}"
-               {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>
-                Tableau de bord
-            </a>
-            <a href="{% url 'appels_offres:liste_appels' %}"
-               {% if request.resolver_match.url_name == 'liste_appels' %}class="active"{% endif %}>
-                Appels d'offres
-            </a>
-            <a href="{% url 'appels_offres:performance_ia' %}"
-               {% if request.resolver_match.url_name == 'performance_ia' %}class="active"{% endif %}>
-                Performance IA
-            </a>
-            <a href="{% url 'appels_offres:statistiques' %}"
-               {% if request.resolver_match.url_name == 'statistiques' %}class="active"{% endif %}>
-                Statistiques
-            </a>
-            <a href="{% url 'appels_offres:carte' %}"
-               {% if request.resolver_match.url_name == 'carte' %}class="active"{% endif %}>
-                Carte
-            </a>
-            <a href="{% url 'appels_offres:synchronisation' %}"
-               {% if request.resolver_match.url_name == 'synchronisation' %}class="active"{% endif %}>
-                🔄 Sync ARMP
-            </a>
+            <a href="{% url 'appels_offres:dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>Tableau de bord</a>
+            <a href="{% url 'appels_offres:liste_appels' %}" {% if request.resolver_match.url_name == 'liste_appels' %}class="active"{% endif %}>Appels d'offres</a>
+            <a href="{% url 'appels_offres:performance_ia' %}" {% if request.resolver_match.url_name == 'performance_ia' %}class="active"{% endif %}>Performance IA</a>
+            <a href="{% url 'appels_offres:statistiques' %}" {% if request.resolver_match.url_name == 'statistiques' %}class="active"{% endif %}>Statistiques</a>
+            <a href="{% url 'appels_offres:carte' %}" {% if request.resolver_match.url_name == 'carte' %}class="active"{% endif %}>Carte</a>
+            <a href="{% url 'appels_offres:synchronisation' %}" {% if request.resolver_match.url_name == 'synchronisation' %}class="active"{% endif %}>Sync ARMP</a>
         </div>
     </div>
 </div>
 
-<!-- CONTENU DES PAGES -->
 {% block content %}{% endblock %}
-
-<!-- ============ FOOTER ============ -->
-<footer class="site-footer">
-    <div class="container-fluid">
-        <div>
-            © 2026 <strong>Région Atsimo-Andrefana</strong> — Tous droits réservés
-        </div>
-        <div>
-            <a href="https://github.com/benjamin-tsenamada/region-appels-offres" target="_blank">
-                📦 Code source sur GitHub
-            </a>
-        </div>
-        <div>
-            <a href="/admin/" class="footer-admin">
-                ⚙️ Administration
-            </a>
-        </div>
-    </div>
-</footer>
 
 </body>
 </html>

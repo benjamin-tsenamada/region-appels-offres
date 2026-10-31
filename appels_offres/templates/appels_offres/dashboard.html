@@ -1,20 +1,23 @@
 {% extends "appels_offres/base.html" %}
+{% load static %}
 {% block title %}Tableau de bord - Région Atsimo-Andrefana{% endblock %}
 
 {% block content %}
 
-<!-- HERO (image Toliara bien visible) -->
-<div class="hero">
+<div class="page-header">
     <div class="container">
-        <p class="brand">Région Atsimo-Andrefana</p>
-        <p class="subtitle">Plateforme intelligente de suivi en temps réel des appels d'offres publics</p>
+        <!-- LE GROS LOGO ANIMÉ AU CENTRE -->
+        <img src="{% static 'images/logo_region.jpg' %}" alt="Logo Région" class="page-header-logo" onerror="this.style.display='none'">
+        
+        <h1>Plateforme intelligente de suivi</h1>
+        <p class="sub">Région Atsimo-Andrefana — Suivi en temps réel des appels d'offres publics</p>
     </div>
 </div>
 
 <div class="container">
 
     <!-- 4 CARTES STATS -->
-    <div class="row g-3 mb-4" style="margin-top: -60px; position: relative; z-index: 10;">
+    <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card blue">
                 <div class="stat-icon">📋</div>
@@ -55,7 +58,7 @@
             <div class="panel">
                 <div class="panel-header">
                     <h5>Derniers appels d'offres</h5>
-                    <a href="{% url 'appels_offres:liste_appels' %}" class="link">Voir tout →</a>
+                    <a href="{% url 'appels_offres:liste_appels' %}" class="link" style="font-size: 0.8rem; color: #1e3a5f; font-weight: 600; text-decoration: none;">Voir tout →</a>
                 </div>
                 <div style="padding: 0;">
                     <div class="table-responsive">
@@ -72,8 +75,7 @@
                                 {% for item in liste_appels %}
                                 <tr>
                                     <td style="padding-left: 18px; max-width: 320px;">
-                                        <a href="{% url 'appels_offres:detail_appel' item.ao.pk %}"
-                                           style="color: #0f172a; text-decoration: none; font-weight: 500;">
+                                        <a href="{% url 'appels_offres:detail_appel' item.ao.pk %}" style="color: #0f172a; text-decoration: none; font-weight: 500;">
                                             {{ item.ao.titre|truncatechars:70 }}
                                         </a>
                                     </td>
@@ -105,7 +107,7 @@
             <div class="panel h-100">
                 <div class="panel-header">
                     <h5>Répartition par secteur (IA)</h5>
-                    <a href="{% url 'appels_offres:statistiques' %}" class="link">Détails →</a>
+                    <a href="{% url 'appels_offres:statistiques' %}" class="link" style="font-size: 0.8rem; color: #1e3a5f; font-weight: 600; text-decoration: none;">Détails →</a>
                 </div>
                 <div class="panel-body">
                     {% for s in repartition_secteur %}

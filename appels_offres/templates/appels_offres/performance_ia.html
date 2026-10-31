@@ -5,14 +5,13 @@
 
 <div class="page-header">
     <div class="container">
-        <h1>🤖 Performance du modèle IA</h1>
+        <h1>Performance du modèle IA</h1>
         <p class="sub">Classification automatique des appels d'offres par secteur</p>
     </div>
 </div>
 
 <div class="container">
-
-    <!-- 4 CARTES STATS -->
+    <!-- Les 4 cartes (identiques à avant) -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card blue">
@@ -39,19 +38,16 @@
             <div class="stat-card purple">
                 <div class="stat-icon">📈</div>
                 <div class="stat-label">Taux de précision</div>
-                <p class="stat-value purple">
-                    {% if precision is not None %}{{ precision }}%{% else %}—{% endif %}
-                </p>
+                <p class="stat-value purple">{% if precision is not None %}{{ precision }}%{% else %}—{% endif %}</p>
             </div>
         </div>
     </div>
 
+    <!-- Les 2 tableaux (identiques) -->
     <div class="row g-3">
         <div class="col-lg-6">
             <div class="panel">
-                <div class="panel-header">
-                    <h5>📈 Synthèse du modèle</h5>
-                </div>
+                <div class="panel-header"><h5>📈 Synthèse du modèle</h5></div>
                 <div class="panel-body">
                     <div style="display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f1f5f9;">
                         <span>Confiance moyenne du modèle</span>
@@ -68,61 +64,39 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 11px 0;">
                         <span><strong>Taux de précision</strong></span>
-                        <strong style="color: #16a34a; font-size: 1.1rem;">
-                            {% if precision is not None %}{{ precision }}%{% else %}—{% endif %}
-                        </strong>
+                        <strong style="color: #16a34a; font-size: 1.1rem;">{% if precision is not None %}{{ precision }}%{% else %}—{% endif %}</strong>
                     </div>
-
                     {% if total_verifiees == 0 %}
-                    <p class="text-muted small mt-3 mb-0">
-                        💡 Pour calculer le taux de précision, allez sur la page détail d'un AO et corrigez la classification IA.
-                    </p>
+                    <p class="text-muted small mt-3 mb-0">💡 Pour calculer le taux de précision, corrigez la classification IA sur la page détail d'un AO.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
-
         <div class="col-lg-6">
             <div class="panel">
-                <div class="panel-header">
-                    <h5>🔍 Détail par couple (réel → prédit)</h5>
-                </div>
+                <div class="panel-header"><h5>🔍 Détail par couple (réel → prédit)</h5></div>
                 <div class="panel-body" style="padding: 0;">
                     {% if matrice %}
                     <div class="table-responsive">
                         <table class="table mb-0">
                             <thead>
-                                <tr>
-                                    <th style="padding-left: 18px;">Secteur réel</th>
-                                    <th>Prédit par l'IA</th>
-                                    <th class="text-end" style="padding-right: 18px;">Occurrences</th>
-                                </tr>
+                                <tr><th style="padding-left: 18px;">Secteur réel</th><th>Prédit par l'IA</th><th class="text-end" style="padding-right: 18px;">Occurrences</th></tr>
                             </thead>
                             <tbody>
                                 {% for item in matrice %}
                                 <tr>
                                     <td style="padding-left: 18px;">{{ item.0.0 }}</td>
-                                    <td>
-                                        {% if item.0.0 == item.0.1 %}
-                                            <span class="badge bg-success" style="font-size: 0.7rem;">{{ item.0.1 }} ✅</span>
-                                        {% else %}
-                                            <span class="badge bg-danger" style="font-size: 0.7rem;">{{ item.0.1 }} ❌</span>
-                                        {% endif %}
-                                    </td>
+                                    <td>{% if item.0.0 == item.0.1 %}<span class="badge bg-success">{{ item.0.1 }} ✅</span>{% else %}<span class="badge bg-danger">{{ item.0.1 }} ❌</span>{% endif %}</td>
                                     <td class="text-end" style="padding-right: 18px;">{{ item.1 }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                    {% else %}
-                    <p class="text-muted" style="padding: 14px 18px;">Aucune donnée à afficher pour l'instant.</p>
-                    {% endif %}
+                    {% else %}<p class="text-muted" style="padding: 14px 18px;">Aucune donnée à afficher.</p>{% endif %}
                 </div>
             </div>
         </div>
     </div>
-
 </div>
-
 {% endblock %}
