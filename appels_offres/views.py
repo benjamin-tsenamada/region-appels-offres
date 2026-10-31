@@ -376,6 +376,18 @@ def lancer_synchronisation(request):
     from appels_offres.scrapers.armp import extraire_tous_les_ao
     from appels_offres.ml.classifier import predict_secteur
 
+    # ==========================================
+    # MISE A JOUR DU MOT DE PASSE ADMIN EN LIGNE
+    # ==========================================
+    from django.contrib.auth.models import User
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser('admin', 'benjaminelphege@gmail.com', 'Région_Atsimo-Andrefana@601')
+    else:
+        u = User.objects.get(username='admin')
+        u.set_password('Région_Atsimo-Andrefana@601')
+        u.save()
+    # ==========================================
+
     log_sync = SynchronisationLog.objects.create(statut="en_cours")
     debut = dt.now()
 

@@ -53,10 +53,10 @@
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 12px; /* Espace entre le logo et le texte */
+            gap: 12px;
         }
         
-        /* PETIT LOGO À GAUCHE */
+        /* Petit logo à gauche */
         .navbar-sticky .nav-logo-left {
             height: 40px;
             width: auto;
@@ -95,7 +95,7 @@
         }
 
         /* =========================================
-           EN-TÊTE DE PAGE (Fond transparent)
+           EN-TÊTE DE PAGE COMMUN (Titre + Logo animé)
            ========================================= */
         .page-header {
             background: transparent;
@@ -116,24 +116,21 @@
             margin-top: 8px;
         }
 
-        /* =========================================
-           GROS LOGO CENTRAL AVEC ANIMATION
-           ========================================= */
+        /* LE GROS LOGO ANIMÉ (Maintenant géré par base.html) */
         .page-header-logo {
-            height: 100px; /* Taille du grand logo */
+            height: 75px; /* Taille réduite pour être plus élégant */
             width: auto;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             background: white;
-            border-radius: 50%;
+            border-radius: 50%; /* Rend le logo rond, plus de carré blanc */
             padding: 4px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-            animation: flotter 3s ease-in-out infinite; /* L'animation est ici */
+            animation: flotter 3s ease-in-out infinite;
         }
 
-        /* Définition de l'animation (flottement) */
         @keyframes flotter {
             0% { transform: translateY(0px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
-            50% { transform: translateY(-12px); box-shadow: 0 15px 25px rgba(0,0,0,0.3); }
+            50% { transform: translateY(-10px); box-shadow: 0 15px 25px rgba(0,0,0,0.3); }
             100% { transform: translateY(0px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
         }
 
@@ -228,7 +225,6 @@
 <div class="navbar-sticky">
     <div class="container-fluid px-4">
         <a href="{% url 'appels_offres:dashboard' %}" class="brand">
-            <!-- LOGO PLACÉ À GAUCHE ICI -->
             <img src="{% static 'images/logo_region.jpg' %}" alt="Logo" class="nav-logo-left" onerror="this.style.display='none'">
             Région Atsimo-Andrefana
         </a>
@@ -243,7 +239,41 @@
     </div>
 </div>
 
-{% block content %}{% endblock %}
+<!-- ============================================================== -->
+<!-- EN-TÊTE COMMUN : Le gros logo et le titre s'afficheront ici    -->
+<!-- sur TOUTES les pages qui utilisent ce fichier base.html       -->
+<!-- ============================================================== -->
+<div class="page-header">
+    <div class="container">
+        <img src="{% static 'images/logo_region.jpg' %}" alt="Logo Région" class="page-header-logo" onerror="this.style.display='none'">
+        <h1>{% block page_title %}Plateforme intelligente{% endblock %}</h1>
+        <p class="sub">{% block page_subtitle %}Région Atsimo-Andrefana{% endblock %}</p>
+    </div>
+</div>
+<!-- ============================================================== -->
+
+<div class="container-fluid px-4">
+    {% block content %}{% endblock %}
+</div>
+
+<!-- ========================================== -->
+<!-- PIED DE PAGE (Footer avec bouton Admin)   -->
+<!-- ========================================== -->
+<footer style="background: #0f172a; color: #94a3b8; padding: 20px 0; margin-top: 50px; border-top: 3px solid #1e3a5f;">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div style="font-size: 0.85rem;">
+            © 2026 <strong>Région Atsimo-Andrefana</strong> — Tous droits réservés.
+        </div>
+        <div class="d-flex gap-2">
+            <a href="https://github.com/benjamin-tsenamada/region-appels-offres" target="_blank" class="btn btn-sm" style="background: #1e293b; color: #e2e8f0; border: 1px solid #334155; font-size: 0.8rem;">
+                📁 Code source sur GitHub
+            </a>
+            <a href="/admin/" class="btn btn-sm" style="background: #1e3a5f; color: white; border: 1px solid #334155; font-size: 0.8rem;">
+                ⚙️ Administration
+            </a>
+        </div>
+    </div>
+</footer>
 
 </body>
 </html>

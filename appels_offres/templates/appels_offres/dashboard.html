@@ -1,21 +1,14 @@
 {% extends "appels_offres/base.html" %}
 {% load static %}
+
 {% block title %}Tableau de bord - Région Atsimo-Andrefana{% endblock %}
 
+<!-- On personnalise le titre pour le Dashboard -->
+{% block page_title %}Plateforme intelligente de suivi{% endblock %}
+{% block page_subtitle %}Région Atsimo-Andrefana — Suivi en temps réel des appels d'offres publics{% endblock %}
+
 {% block content %}
-
-<div class="page-header">
-    <div class="container">
-        <!-- LE GROS LOGO ANIMÉ AU CENTRE -->
-        <img src="{% static 'images/logo_region.jpg' %}" alt="Logo Région" class="page-header-logo" onerror="this.style.display='none'">
-        
-        <h1>Plateforme intelligente de suivi</h1>
-        <p class="sub">Région Atsimo-Andrefana — Suivi en temps réel des appels d'offres publics</p>
-    </div>
-</div>
-
 <div class="container">
-
     <!-- 4 CARTES STATS -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
@@ -128,7 +121,5 @@
             </div>
         </div>
     </div>
-
 </div>
-
 {% endblock %}
