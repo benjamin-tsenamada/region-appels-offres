@@ -1,4 +1,18 @@
 from django.contrib import admin
+
+# On personnalise le titre de l'admin
+admin.site.site_header = "Région Atsimo-Andrefana — Administration"
+admin.site.site_title = "Région Atsimo-Andrefana"
+admin.site.index_title = "Gestion des appels d'offres publics"
+
+# On active le style personnalisé
+class AdminStyleMixin:
+    class Media:
+        css = {
+            'all': ('css/admin_custom.css',)
+        }
+
+admin.site.__class__ = type('AdminSite', (admin.site.__class__, AdminStyleMixin), {})
 from .models import (
     Secteur, TypeProcedure, Region, District,
     AppelOffre, ClassificationLog, SynchronisationLog

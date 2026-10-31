@@ -1,0 +1,148 @@
+/* =========================================
+   STYLE PERSONNALISÉ POUR L'ADMINISTRATION
+   ========================================= */
+
+/* Barre de navigation supérieure (Header) */
+#header {
+    background: linear-gradient(120deg, #0f172a, #1e3a5f) !important;
+    color: white !important;
+    padding: 15px 40px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+#header a:link, #header a:visited {
+    color: #93c5fd !important;
+    font-weight: 600;
+}
+
+#branding h1 {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    font-size: 1.4rem !important;
+}
+
+/* Le fil d'ariane */
+div.breadcrumbs {
+    background: #1e3a5f !important;
+    color: #cbd5e1 !important;
+    padding: 12px 40px !important;
+}
+div.breadcrumbs a {
+    color: #93c5fd !important;
+}
+
+/* Fond général de la page */
+body {
+    background-color: #f1f5f9 !important;
+    font-family: -apple-system, system-ui, "Segoe UI", sans-serif !important;
+}
+
+/* Titres de section (ex: "Gestion des appels d'offres publics") */
+h1, h2 {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+}
+
+/* Les modules (les grands blocs : APPELS_OFFRES, AUTHENTIFICATION) */
+.module {
+    background: white !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
+    margin-bottom: 25px !important;
+    overflow: hidden;
+}
+
+.module h2, .module caption {
+    background: #1e3a5f !important;
+    color: white !important;
+    padding: 12px 20px !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 !important;
+}
+
+/* Les liens dans les tables (Appel offres, Districts, etc.) */
+.module table {
+    width: 100%;
+}
+.module table td {
+    padding: 12px 20px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+.module table td a {
+    color: #1e3a5f !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+}
+.module table td a:hover {
+    color: #ea580c !important;
+}
+
+/* Les boutons "Ajouter" et "Modification" */
+.addlink, .changelink {
+    font-weight: 600 !important;
+    padding: 4px 10px !important;
+    border-radius: 6px;
+    background: #e0f2fe;
+    color: #0284c7 !important;
+}
+.addlink:hover, .changelink:hover {
+    background: #0284c7;
+    color: white !important;
+}
+
+/* La sidebar "Actions récentes" */
+#content-related {
+    background: white !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
+    padding: 20px !important;
+    margin-top: 20px;
+}
+#content-related h3 {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+#content-related .actionlist li a {
+    color: #1e3a5f !important;
+    font-weight: 500;
+}
+
+/* Les champs de formulaire (pour les pages de modification) */
+input[type="text"], input[type="password"], textarea, select {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
+}
+input[type="text"]:focus, textarea:focus, select:focus {
+    border-color: #1e3a5f !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.15) !important;
+}
+
+/* Boutons de sauvegarde */
+input[type="submit"], .button {
+    background: #1e3a5f !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+input[type="submit"]:hover, .button:hover {
+    background: #0f172a !important;
+}
+
+/* Rendre les liens de "Modification" et "Ajouter" plus jolis */
+.object-tools a {
+    background: #1e3a5f !important;
+    color: white !important;
+    border-radius: 6px !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+}
