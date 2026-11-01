@@ -1,0 +1,136 @@
+/* ============================================================
+   ADMIN — Logo Région + Image Toliara + Design Vert/Doré
+   ============================================================ */
+
+:root {
+  --primary: #0b3d3a;
+  --secondary: #0b6b63;
+  --accent: #e0a93b;
+  color-scheme: light !important;
+}
+
+/* 1. FOND : On force l'image de Toliara avec un voile lumineux */
+body {
+  background: linear-gradient(rgba(255, 255, 255, 0.40), rgba(255, 255, 255, 0.50)),
+            url("/static/images/toliara.jpg") !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-attachment: fixed !important;
+  color: #0f172a !important;
+  font-family: -apple-system, system-ui, sans-serif !important;
+}
+
+/* 2. BARRE DU HAUT : Vert profond */
+#header {
+  background: var(--primary) !important;
+  color: white !important;
+  border-bottom: 4px solid var(--accent);
+}
+#branding h1 a { 
+  color: white !important; 
+  font-weight: bold; 
+}
+#user-tools a { color: #d1fae5 !important; }
+
+/* 3. CARTES (MODULES) : Blanches, propres, avec ombre */
+.module {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+  border: none !important;
+}
+.module h2, .module caption {
+  background: var(--primary) !important;
+  color: white !important;
+  border-bottom: 3px solid var(--accent);
+}
+
+/* 4. TEXTES ET LIENS */
+.module table td, .module table th { color: #0f172a !important; }
+.module table td a { color: var(--primary) !important; font-weight: bold; }
+.module table td a:hover { color: var(--accent) !important; }
+
+/* 5. BOUTONS */
+.addlink { color: #0b6b63 !important; font-weight: bold; }
+.changelink { color: #8f6917 !important; font-weight: bold; }
+
+/* 6. PAGE DE CONNEXION */
+.login #container {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
+}
+.login #header { background: var(--primary) !important; }
+.login .submit-row input {
+  background: var(--primary) !important;
+  color: white !important;
+  border-radius: 6px !important;
+}
+
+/* ============================================================
+   REMPLACEMENT DE L'ICÔNE 🏛️ PAR TON LOGO
+   ============================================================ */
+#site-name a::before {
+  content: "" !important;
+  display: inline-block !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: url("/static/images/logo_region.jpg") no-repeat center !important;
+  background-size: contain !important;
+  vertical-align: middle !important;
+  margin-right: 12px !important;
+  border-radius: 50% !important;
+  background-color: white !important;
+  border: 2px solid #e0a93b !important;
+}
+/* ============================================================
+   BOUTONS SUPPRIMER ET ANNULER
+   ============================================================ */
+.deletelink-custom {
+    display: inline-block !important;
+    padding: 2px 8px !important;
+    margin-left: 5px !important;
+    background-color: #fee2e2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fca5a5 !important;
+    border-radius: 4px !important;
+    font-size: 0.75rem !important;
+    font-weight: bold !important;
+    text-decoration: none !important;
+    transition: all 0.2s;
+}
+.deletelink-custom:hover {
+    background-color: #dc2626 !important;
+    color: white !important;
+}
+
+/* Bouton "Annuler" dans les formulaires */
+.submit-row a.closelink, .submit-row .btn-annuler {
+    background: #e2e8f0 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    padding: 8px 16px !important;
+    font-weight: bold !important;
+    text-decoration: none !important;
+    display: inline-block;
+    margin-left: 10px;
+}
+.submit-row a.closelink:hover, .submit-row .btn-annuler:hover {
+    background: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+/* Bouton "Supprimer" dans les formulaires (en bas) */
+.submit-row a.deletelink {
+    background: #dc2626 !important;
+    color: white !important;
+    border-radius: 6px !important;
+    padding: 8px 16px !important;
+    font-weight: bold !important;
+    text-decoration: none !important;
+    float: right; /* Pour le mettre à droite */
+}
+.submit-row a.deletelink:hover {
+    background: #b91c1c !important;
+}

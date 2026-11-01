@@ -1,0 +1,50 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | Région Atsimo-Andrefana{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">Région Atsimo-Andrefana — Administration</a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/admin_custom.css' %}?v=400">
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+    });
+</script>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<script>
+    // Ce script ajoute un bouton "Supprimer" à côté de "Modification" sur la page d'accueil
+    document.addEventListener('DOMContentLoaded', function() {
+        var changeLinks = document.querySelectorAll('.changelink');
+        changeLinks.forEach(function(link) {
+            // On récupère l'URL de modification (ex: /admin/app/model/1/change/)
+            var url = link.getAttribute('href');
+            if (url) {
+                // On la transforme en URL de suppression (ex: /admin/app/model/1/delete/)
+                var deleteUrl = url.replace('/change/', '/delete/');
+                
+                // On crée le lien "Supprimer"
+                var delLink = document.createElement('a');
+                delLink.href = deleteUrl;
+                delLink.className = 'deletelink-custom';
+                delLink.innerHTML = '🗑️ Supprimer';
+                
+                // On l'ajoute juste après le lien "Modification"
+                link.parentNode.insertBefore(delLink, link.nextSibling);
+            }
+        });
+    });
+</script>
+{% endblock %}
