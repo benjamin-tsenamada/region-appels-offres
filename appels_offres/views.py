@@ -131,7 +131,7 @@ def statistiques(request):
             })
 
     top_5 = repartition_regions[:5]
-    top_regions = repartition_regions[:10]  # <--- LA CORRECTION EST ICI
+    top_regions = repartition_regions[:10]
     max_nb = repartition_regions[0]["nb"] if repartition_regions else 0
     max_region = repartition_regions[0]["nom"] if repartition_regions else "—"
     moyenne = round(total_avec_region / len(repartition_regions), 1) if repartition_regions else 0
@@ -381,10 +381,10 @@ def lancer_synchronisation(request):
     # ==========================================
     from django.contrib.auth.models import User
     if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser('admin', 'benjaminelphege@gmail.com', 'Région_Atsimo-Andrefana@601')
+        User.objects.create_superuser('admin', 'admin@region.mg', 'admin123region')
     else:
         u = User.objects.get(username='admin')
-        u.set_password('Région_Atsimo-Andrefana@601')
+        u.set_password('admin123region')
         u.save()
     # ==========================================
 
