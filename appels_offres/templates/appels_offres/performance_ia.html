@@ -1,101 +1,70 @@
 {% extends "appels_offres/base.html" %}
-{% block title %}Appels d'offres - Région Atsimo-Andrefana{% endblock %}
-{% block page_title %}Appels d'offres publics{% endblock %}
-{% block page_subtitle %}Recherche, filtres et consultation — {{ total_resultats }} résultat(s){% endblock %}
+{% block title %}Performance IA - Région Atsimo-Andrefana{% endblock %}
 
 {% block content %}
-
 <div class="page-header">
     <div class="container">
         <h1>Performance du modèle IA</h1>
-        <p class="sub">Classification automatique des appels d'offres par secteur</p>
+        <p class="sub">Évaluation du classifieur SVM linéaire calibré</p>
     </div>
 </div>
 
 <div class="container">
-    <!-- Les 4 cartes (identiques à avant) -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="stat-card blue">
-                <div class="stat-icon">📊</div>
-                <div class="stat-label">Prédictions totales</div>
-                <p class="stat-value blue">{{ total_predictions }}</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card orange">
-                <div class="stat-icon">✅</div>
-                <div class="stat-label">Prédictions vérifiées</div>
-                <p class="stat-value orange">{{ total_verifiees }}</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card green">
-                <div class="stat-icon">🎯</div>
-                <div class="stat-label">Prédictions correctes</div>
-                <p class="stat-value green">{{ correctes }}</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card purple">
-                <div class="stat-icon">📈</div>
-                <div class="stat-label">Taux de précision</div>
-                <p class="stat-value purple">{% if precision is not None %}{{ precision }}%{% else %}—{% endif %}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Les 2 tableaux (identiques) -->
     <div class="row g-3">
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-header"><h5>📈 Synthèse du modèle</h5></div>
-                <div class="panel-body">
-                    <div style="display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f1f5f9;">
-                        <span>Confiance moyenne du modèle</span>
-                        <strong style="color: #7c3aed; font-size: 1.05rem;">{{ confiance_moyenne }}%</strong>
+        <!-- Colonne de gauche : Score global -->
+        <div class="col-lg-4">
+            <div class="panel h-100 text-center p-4 d-flex flex-column justify-content-center">
+                <h5 style="color: #64748b; font-size: 0.9rem; text-transform: uppercase;">Confiance Moyenne (Production)</h5>
+                <div style="font-size: 4rem; font-weight: 800; color: #0f172a; line-height: 1;">{{ confiance_moyenne }}<span style="font-size: 2rem; color: #7c3aed;">%</span></div>
+                <p class="text-muted mt-3">Basé sur {{ total_predictions }} prédictions</p>
+                
+                <div class="mt-4 pt-4 border-top">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Prédictions vérifiées :</span> <strong>{{ total_verifiees }}</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f1f5f9;">
-                        <span>Nombre de prédictions totales</span><strong>{{ total_predictions }}</strong>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Taux de précision réel :</span> <strong>{% if precision %}{{ precision }}%{% else %}—{% endif %}</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f1f5f9;">
-                        <span>Prédictions vérifiées manuellement</span><strong>{{ total_verifiees }}</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid #f1f5f9;">
-                        <span>Prédictions correctes</span><strong>{{ correctes }}</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 11px 0;">
-                        <span><strong>Taux de précision</strong></span>
-                        <strong style="color: #16a34a; font-size: 1.1rem;">{% if precision is not None %}{{ precision }}%{% else %}—{% endif %}</strong>
-                    </div>
-                    {% if total_verifiees == 0 %}
-                    <p class="text-muted small mt-3 mb-0">💡 Pour calculer le taux de précision, corrigez la classification IA sur la page détail d'un AO.</p>
-                    {% endif %}
                 </div>
             </div>
         </div>
-        <div class="col-lg-6">
-            <div class="panel">
-                <div class="panel-header"><h5>🔍 Détail par couple (réel → prédit)</h5></div>
-                <div class="panel-body" style="padding: 0;">
+
+        <!-- Colonne de droite : Matrice de confusion stylisée -->
+        <div class="col-lg-8">
+            <div class="panel h-100">
+                <div class="panel-header"><h5>Matrice de confusion (Réel vs Prédit)</h5></div>
+                <div class="panel-body">
                     {% if matrice %}
-                    <div class="table-responsive">
-                        <table class="table mb-0">
-                            <thead>
-                                <tr><th style="padding-left: 18px;">Secteur réel</th><th>Prédit par l'IA</th><th class="text-end" style="padding-right: 18px;">Occurrences</th></tr>
-                            </thead>
-                            <tbody>
-                                {% for item in matrice %}
-                                <tr>
-                                    <td style="padding-left: 18px;">{{ item.0.0 }}</td>
-                                    <td>{% if item.0.0 == item.0.1 %}<span class="badge bg-success">{{ item.0.1 }} ✅</span>{% else %}<span class="badge bg-danger">{{ item.0.1 }} ❌</span>{% endif %}</td>
-                                    <td class="text-end" style="padding-right: 18px;">{{ item.1 }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <div style="display: grid; grid-template-columns: 1fr 2fr 2fr; gap: 10px; text-align: center; font-weight: 600;">
+                        <!-- En-têtes (simplifiés) -->
+                        <div></div>
+                        <div class="text-muted small">Prédit : Même secteur ✅</div>
+                        <div class="text-muted small">Prédit : Autre secteur ❌</div>
+                        
+                        {% regroup matrice by 0.0 as grouped_matrice %}
+                        {% for group in grouped_matrice %}
+                            <div style="text-align: left; padding-top: 15px; color: #1e3a5f;">{{ group.grouper }}</div>
+                            
+                            <!-- On cherche les vraies et fausses prédictions -->
+                            {% for item in group.list %}
+                                {% if item.0.0 == item.0.1 %}
+                                    <div style="background: #16a34a; color: white; border-radius: 8px; padding: 20px; font-size: 1.5rem; box-shadow: 0 4px 6px rgba(22,163,74,0.3);">
+                                        {{ item.1 }}
+                                    </div>
+                                    <div></div>
+                                {% else %}
+                                    <div></div>
+                                    <div style="background: #ef4444; color: white; border-radius: 8px; padding: 20px; font-size: 1.5rem; box-shadow: 0 4px 6px rgba(239,68,68,0.3);">
+                                        {{ item.1 }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
                     </div>
-                    {% else %}<p class="text-muted" style="padding: 14px 18px;">Aucune donnée à afficher.</p>{% endif %}
+                    <p class="text-muted small mt-4 text-center">Le vert représente les bonnes classifications, le rouge les erreurs.</p>
+                    {% else %}
+                    <p class="text-muted text-center py-5">Aucune vérification manuelle enregistrée pour le moment.</p>
+                    {% endif %}
                 </div>
             </div>
         </div>

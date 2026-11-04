@@ -224,9 +224,9 @@
 
 <div class="navbar-sticky">
     <div class="container-fluid px-4">
-        <a href="{% url 'appels_offres:dashboard' %}" class="brand">
+                <a href="{% url 'appels_offres:dashboard' %}" class="brand">
             <img src="{% static 'images/logo_region.jpg' %}" alt="Logo" class="nav-logo-left" onerror="this.style.display='none'">
-            Région Atsimo-Andrefana
+            Plateforme Intelligente
         </a>
         <div class="nav-links">
             <a href="{% url 'appels_offres:dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>Tableau de bord</a>
@@ -246,8 +246,7 @@
 <div class="page-header">
     <div class="container">
         <img src="{% static 'images/logo_region.jpg' %}" alt="Logo Région" class="page-header-logo" onerror="this.style.display='none'">
-        <h1>{% block page_title %}Plateforme intelligente{% endblock %}</h1>
-        <p class="sub">{% block page_subtitle %}Région Atsimo-Andrefana{% endblock %}</p>
+        <!-- Les textes h1 et p ont été supprimés pour éviter le doublon avec l'image de fond -->
     </div>
 </div>
 <!-- ============================================================== -->

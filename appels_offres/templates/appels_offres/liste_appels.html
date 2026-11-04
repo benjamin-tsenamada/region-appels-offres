@@ -1,15 +1,13 @@
 {% extends "appels_offres/base.html" %}
 {% block title %}Appels d'offres - Région Atsimo-Andrefana{% endblock %}
-{% block page_title %}Appels d'offres publics{% endblock %}
-{% block page_subtitle %}Recherche, filtres et consultation — {{ total_resultats }} résultat(s){% endblock %}
 
 {% block content %}
 
-    <div class="container">
-        <h1>Appels d'offres publics</h1>
-        <p class="sub">Recherche, filtres et consultation — <strong>{{ total_resultats }}</strong> résultat(s)</p>
+    <!-- EN-TÊTE DE LA PAGE (Titre bien visible sur le fond) -->
+    <div class="container text-center mt-4 mb-3">
+        <h1 class="text-white fw-bold" style="text-shadow: 0 2px 10px rgba(0,0,0,0.8); font-size: 2.2rem;">Appels d'offres publics</h1>
+        <p class="text-white fs-5" style="text-shadow: 0 2px 10px rgba(0,0,0,0.8);">Recherche, filtres et consultation — <strong>{{ total_resultats }}</strong> résultat(s)</p>
     </div>
-</div>
 
 <div class="container">
 
