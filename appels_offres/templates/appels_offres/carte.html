@@ -1,135 +1,137 @@
 {% extends "appels_offres/base.html" %}
-{% block title %}Répartition géographique - Région Atsimo-Andrefana{% endblock %}
+{% load static %}
+
+{% block title %}Carte - Région Atsimo-Andrefana{% endblock %}
+{% block page_title %}Carte interactive{% endblock %}
+{% block page_subtitle %}Visualisation géographique et statistique des appels d'offres par région{% endblock %}
 
 {% block content %}
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<div class="page-header">
-    <div class="container">
-        <h1>🗺️ Répartition géographique des appels d'offres</h1>
-        <p class="sub">Visualisation cartographique et statistique des <strong>{{ total_avec_region }}</strong> appels d'offres par région</p>
-    </div>
-</div>
-
-<div class="container">
-
-    <ul class="nav nav-tabs mb-3" id="carteTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0;">
+<div class="container-fluid p-0">
+    <!-- Onglets -->
+    <ul class="nav nav-tabs mb-4" id="carteTabs" role="tablist" style="border-bottom: 2px solid #e2e8f0;">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="tab-carte-btn" data-bs-toggle="tab" data-bs-target="#tab-carte" type="button" role="tab" style="color: #0f172a; font-weight: 600; border: none; border-bottom: 3px solid #1e3a5f;">
-                🗺️ Carte interactive
+            <button class="nav-link active" id="tab-carte-btn" data-bs-toggle="tab" data-bs-target="#tab-carte" type="button" role="tab" style="color: #0f172a; font-weight: 700; border: none; border-bottom: 3px solid #0f172a; background: transparent; padding: 10px 20px;">
+                <i class="fa-solid fa-map-location-dot me-2"></i> Carte interactive
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-stats-btn" data-bs-toggle="tab" data-bs-target="#tab-stats" type="button" role="tab" style="color: #64748b; font-weight: 600; border: none;">
-                📊 Statistiques par région
+            <button class="nav-link" id="tab-stats-btn" data-bs-toggle="tab" data-bs-target="#tab-stats" type="button" role="tab" style="color: #64748b; font-weight: 600; border: none; background: transparent; padding: 10px 20px;">
+                <i class="fa-solid fa-chart-bar me-2"></i> Statistiques par région
             </button>
         </li>
     </ul>
 
     <div class="tab-content" id="carteTabsContent">
 
+        <!-- ONGLET CARTE -->
         <div class="tab-pane fade show active" id="tab-carte" role="tabpanel">
-            <div class="panel mb-3" style="overflow: hidden;">
-                <div id="map" style="height: 70vh; width: 100%;"></div>
+            <div class="panel mb-3" style="overflow: hidden; padding: 0;">
+                <div id="map" style="height: 65vh; width: 100%; z-index: 1;"></div>
             </div>
 
             <div class="panel p-3 mb-4">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
                     <div>
-                        <strong style="font-size: 0.95rem; color: #0f172a;">📍 Nombre d'appels d'offres par région</strong>
-                        <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">
-                            Dernière actualisation : <span id="lastRefresh" style="color: #16a34a; font-weight: 600;">il y a 0 s</span>
+                        <strong style="font-size: 0.95rem; color: #0f172a;"><i class="fa-solid fa-location-dot text-danger me-1"></i> Nombre d'appels d'offres par région</strong>
+                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
+                            Dernière actualisation : <span id="lastRefresh" style="color: #16a34a; font-weight: 700;">il y a 0 s</span>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 14px; font-size: 0.8rem; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <span style="width: 12px; height: 12px; background: #93c5fd; border-radius: 50%; border: 1px solid #fff;"></span> 1-20 AO
+                    <div style="display: flex; align-items: center; gap: 16px; font-size: 0.8rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="width: 12px; height: 12px; background: #93c5fd; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,0.2);"></span> 1-20 AO
                         </div>
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <span style="width: 14px; height: 14px; background: #3b82f6; border-radius: 50%; border: 1px solid #fff;"></span> 21-50 AO
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="width: 14px; height: 14px; background: #3b82f6; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,0.2);"></span> 21-50 AO
                         </div>
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <span style="width: 16px; height: 16px; background: #f59e0b; border-radius: 50%; border: 1px solid #fff;"></span> 51-100 AO
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="width: 16px; height: 16px; background: #f59e0b; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,0.2);"></span> 51-100 AO
                         </div>
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <span style="width: 18px; height: 18px; background: #dc2626; border-radius: 50%; border: 1px solid #fff;"></span> 100+ AO
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="width: 18px; height: 18px; background: #dc2626; border-radius: 50%; border: 1px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,0.2);"></span> 100+ AO
                         </div>
-                        <button onclick="refreshCarte()" style="background: #1e3a5f; color: #fff; border: none; padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">
-                            🔄 Actualiser
+                        <button onclick="refreshCarte()" class="btn btn-sm" style="background: #0f172a; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 600; transition: all 0.2s;">
+                            <i class="fa-solid fa-rotate me-1"></i> Actualiser
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- ONGLET STATISTIQUES -->
         <div class="tab-pane fade" id="tab-stats" role="tabpanel">
+            
+            <!-- 4 CARTES KPI (Harmonisées) -->
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
-                    <div class="stat-card blue">
-                        <div class="stat-icon">📍</div>
-                        <div class="stat-label">Régions couvertes</div>
-                        <p class="stat-value blue">{{ nb_regions }}</p>
-                        <div class="stat-sub">sur 23 au total</div>
+                    <div class="kpi-card">
+                        <div class="icon-box bg-blue-soft"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="kpi-title">Régions couvertes</div>
+                        <p class="kpi-value">{{ nb_regions }}</p>
+                        <div class="kpi-trend" style="color: #94a3b8;">sur 23 au total</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card orange">
-                        <div class="stat-icon">🏆</div>
-                        <div class="stat-label">Région la plus active</div>
-                        <p class="stat-value orange" style="font-size: 1.2rem;">{{ max_region }}</p>
-                        <div class="stat-sub">{{ max_nb }} AO</div>
+                    <div class="kpi-card">
+                        <div class="icon-box bg-orange-soft"><i class="fa-solid fa-trophy"></i></div>
+                        <div class="kpi-title">Région la plus active</div>
+                        <p class="kpi-value" style="font-size: 1.2rem; margin-top: 5px;">{{ max_region }}</p>
+                        <div class="kpi-trend" style="color: #94a3b8;">{{ max_nb }} AO</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card green">
-                        <div class="stat-icon">📊</div>
-                        <div class="stat-label">Moyenne par région</div>
-                        <p class="stat-value green">{{ moyenne_par_region }}</p>
-                        <div class="stat-sub">AO / région</div>
+                    <div class="kpi-card">
+                        <div class="icon-box bg-green-soft"><i class="fa-solid fa-chart-simple"></i></div>
+                        <div class="kpi-title">Moyenne par région</div>
+                        <p class="kpi-value">{{ moyenne_par_region }}</p>
+                        <div class="kpi-trend" style="color: #94a3b8;">AO / région</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card purple">
-                        <div class="stat-icon">📋</div>
-                        <div class="stat-label">Total AO localisés</div>
-                        <p class="stat-value purple">{{ total_avec_region }}</p>
-                        <div class="stat-sub">avec région renseignée</div>
+                    <div class="kpi-card">
+                        <div class="icon-box bg-purple-soft"><i class="fa-solid fa-file-invoice"></i></div>
+                        <div class="kpi-title">Total AO localisés</div>
+                        <p class="kpi-value">{{ total_avec_region }}</p>
+                        <div class="kpi-trend" style="color: #94a3b8;">avec région renseignée</div>
                     </div>
                 </div>
             </div>
 
+            <!-- TABLEAU ET TOP 5 -->
             <div class="row g-3">
                 <div class="col-lg-8">
                     <div class="panel">
                         <div class="panel-header">
-                            <h5>📊 Répartition détaillée par région</h5>
+                            <h5><i class="fa-solid fa-table-list me-2"></i> Répartition détaillée par région</h5>
                         </div>
                         <div style="padding: 0;">
                             <div class="table-responsive">
                                 <table class="table align-middle mb-0">
                                     <thead>
                                         <tr>
-                                            <th style="padding-left: 18px; width: 40px;">#</th>
+                                            <th style="padding-left: 20px; width: 40px;">#</th>
                                             <th>Région</th>
                                             <th style="width: 80px;" class="text-end">AO</th>
                                             <th style="width: 80px;" class="text-end">%</th>
-                                            <th style="padding-right: 18px;">Répartition</th>
+                                            <th style="padding-right: 20px;">Répartition</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for r in repartition_regions %}
                                         <tr>
-                                            <td style="padding-left: 18px; color: #94a3b8; font-weight: 600;">{{ forloop.counter }}</td>
+                                            <td style="padding-left: 20px; color: #94a3b8; font-weight: 600;">{{ forloop.counter }}</td>
                                             <td>
                                                 <a href="{% url 'appels_offres:liste_appels' %}?region={{ r.nom|urlencode }}"
-                                                   style="color: #0f172a; text-decoration: none; font-weight: 500;">
+                                                   style="color: #0f172a; text-decoration: none; font-weight: 600;">
                                                     {{ r.nom }}
                                                 </a>
                                             </td>
                                             <td class="text-end"><strong>{{ r.nb }}</strong></td>
                                             <td class="text-end"><span style="color: #64748b; font-size: 0.85rem;">{{ r.pourcentage }}%</span></td>
-                                            <td style="padding-right: 18px;">
+                                            <td style="padding-right: 20px;">
                                                 <div style="background: #e2e8f0; border-radius: 6px; height: 8px; overflow: hidden;">
                                                     <div style="
                                                         background: {% if forloop.counter == 1 %}#dc2626{% elif forloop.counter <= 3 %}#f59e0b{% elif forloop.counter <= 10 %}#60a5fa{% else %}#94a3b8{% endif %};
@@ -149,7 +151,7 @@
                 <div class="col-lg-4">
                     <div class="panel">
                         <div class="panel-header">
-                            <h5>🏆 Top 5 régions</h5>
+                            <h5><i class="fa-solid fa-ranking-star me-2"></i> Top 5 régions</h5>
                         </div>
                         <div class="panel-body">
                             {% for r in top_5 %}
@@ -185,6 +187,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+    // ... (Le script JavaScript reste EXACTEMENT le même que celui que tu m'as fourni) ...
     const map = L.map('map', {
         maxBounds: [[-28, 40], [-10, 52]],
         maxBoundsViscosity: 1.0

@@ -1,136 +1,193 @@
-/* ============================================================
-   ADMIN — Logo Région + Image Toliara + Design Vert/Doré
-   ============================================================ */
+/* =========================================
+   ADMINISTRATION - DESIGN MODERNE & PRO
+   ========================================= */
 
 :root {
-  --primary: #0b3d3a;
-  --secondary: #0b6b63;
-  --accent: #e0a93b;
-  color-scheme: light !important;
+    color-scheme: light !important;
+    --primary: #0f172a;
+    --accent: #eab308;
 }
 
-/* 1. FOND : On force l'image de Toliara avec un voile lumineux */
 body {
-  background: linear-gradient(rgba(255, 255, 255, 0.40), rgba(255, 255, 255, 0.50)),
-            url("/static/images/toliara.jpg") !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-attachment: fixed !important;
-  color: #0f172a !important;
-  font-family: -apple-system, system-ui, sans-serif !important;
+    background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.85)),
+                url("/static/images/toliara.jpg") no-repeat center center fixed !important;
+    background-size: cover !important;
+    font-family: -apple-system, system-ui, "Segoe UI", sans-serif !important;
+    color: #1e293b !important;
 }
 
-/* 2. BARRE DU HAUT : Vert profond */
+.theme-toggle { display: none !important; }
+
+/* BARRE DU HAUT (HEADER) */
 #header {
-  background: var(--primary) !important;
-  color: white !important;
-  border-bottom: 4px solid var(--accent);
-}
-#branding h1 a { 
-  color: white !important; 
-  font-weight: bold; 
-}
-#user-tools a { color: #d1fae5 !important; }
-
-/* 3. CARTES (MODULES) : Blanches, propres, avec ombre */
-.module {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border-radius: 10px !important;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-  border: none !important;
-}
-.module h2, .module caption {
-  background: var(--primary) !important;
-  color: white !important;
-  border-bottom: 3px solid var(--accent);
-}
-
-/* 4. TEXTES ET LIENS */
-.module table td, .module table th { color: #0f172a !important; }
-.module table td a { color: var(--primary) !important; font-weight: bold; }
-.module table td a:hover { color: var(--accent) !important; }
-
-/* 5. BOUTONS */
-.addlink { color: #0b6b63 !important; font-weight: bold; }
-.changelink { color: #8f6917 !important; font-weight: bold; }
-
-/* 6. PAGE DE CONNEXION */
-.login #container {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important;
-}
-.login #header { background: var(--primary) !important; }
-.login .submit-row input {
-  background: var(--primary) !important;
-  color: white !important;
-  border-radius: 6px !important;
-}
-
-/* ============================================================
-   REMPLACEMENT DE L'ICÔNE 🏛️ PAR TON LOGO
-   ============================================================ */
-#site-name a::before {
-  content: "" !important;
-  display: inline-block !important;
-  width: 32px !important;
-  height: 32px !important;
-  background: url("/static/images/logo_region.jpg") no-repeat center !important;
-  background-size: contain !important;
-  vertical-align: middle !important;
-  margin-right: 12px !important;
-  border-radius: 50% !important;
-  background-color: white !important;
-  border: 2px solid #e0a93b !important;
-}
-/* ============================================================
-   BOUTONS SUPPRIMER ET ANNULER
-   ============================================================ */
-.deletelink-custom {
-    display: inline-block !important;
-    padding: 2px 8px !important;
-    margin-left: 5px !important;
-    background-color: #fee2e2 !important;
-    color: #dc2626 !important;
-    border: 1px solid #fca5a5 !important;
-    border-radius: 4px !important;
-    font-size: 0.75rem !important;
-    font-weight: bold !important;
-    text-decoration: none !important;
-    transition: all 0.2s;
-}
-.deletelink-custom:hover {
-    background-color: #dc2626 !important;
+    background: #0f172a !important;
     color: white !important;
+    padding: 15px 30px !important;
+    border-bottom: 3px solid var(--accent) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    display: flex !important;
+    align-items: center !important;
 }
+#branding h1, #branding h1 a:link, #branding h1 a:visited {
+    color: white !important;
+    font-weight: 800 !important;
+    font-size: 1.2rem !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#user-tools, #user-tools a { color: #cbd5e1 !important; font-weight: 500 !important; }
+#user-tools a:hover { color: var(--accent) !important; }
 
-/* Bouton "Annuler" dans les formulaires */
-.submit-row a.closelink, .submit-row .btn-annuler {
-    background: #e2e8f0 !important;
+/* Fil d'Ariane */
+div.breadcrumbs {
+    background: rgba(255, 255, 255, 0.9) !important;
     color: #475569 !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 6px !important;
-    padding: 8px 16px !important;
-    font-weight: bold !important;
-    text-decoration: none !important;
-    display: inline-block;
-    margin-left: 10px;
+    padding: 12px 30px !important;
+    border-bottom: none !important;
 }
-.submit-row a.closelink:hover, .submit-row .btn-annuler:hover {
-    background: #cbd5e1 !important;
-    color: #0f172a !important;
+div.breadcrumbs a { color: #0f172a !important; font-weight: 600; }
+
+/* Titre de la page */
+#content h1 {
+    color: white !important;
+    font-weight: 800 !important;
+    font-size: 1.5rem !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
 }
 
-/* Bouton "Supprimer" dans les formulaires (en bas) */
-.submit-row a.deletelink {
-    background: #dc2626 !important;
-    color: white !important;
-    border-radius: 6px !important;
-    padding: 8px 16px !important;
-    font-weight: bold !important;
-    text-decoration: none !important;
-    float: right; /* Pour le mettre à droite */
+/* CARTES (MODULES) */
+.module {
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+    border: none !important;
+    overflow: hidden !important;
+    margin-bottom: 25px !important;
 }
-.submit-row a.deletelink:hover {
-    background: #b91c1c !important;
+.module h2, .module caption, .inline-group h2 {
+    background: #1e293b !important;
+    color: white !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+    padding: 15px 20px !important;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--accent) !important;
+    margin: 0 !important;
+}
+
+/* Lignes du tableau */
+.module table { width: 100%; border-collapse: collapse; }
+.module table td, .module table th {
+    padding: 12px 20px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background: transparent !important;
+    vertical-align: middle !important;
+}
+.module table tr:last-child td { border-bottom: none !important; }
+.module table tr:hover { background: #f8fafc !important; }
+
+.module table td a {
+    color: #0f172a !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+}
+.module table td a:hover { color: #3b82f6 !important; }
+
+/* =========================================
+   LES VRAIS BOUTONS (AJOUTER / MODIFIER)
+   ========================================= */
+.module table td a.addlink, 
+.module table td a.changelink, 
+.module table td a.deletelink {
+    display: inline-block !important;
+    padding: 6px 12px !important;
+    border-radius: 6px !important;
+    text-decoration: none !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    transition: all 0.2s !important;
+    margin-right: 5px !important;
+}
+
+/* Bouton Ajouter (Vert) */
+.module table td a.addlink {
+    background-color: #dcfce7 !important;
+    color: #166534 !important;
+    border: 1px solid #bbf7d0 !important;
+}
+.module table td a.addlink:hover {
+    background-color: #16a34a !important;
+    color: white !important;
+}
+
+/* Bouton Modifier (Bleu) */
+.module table td a.changelink {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    border: 1px solid #bae6fd !important;
+}
+.module table td a.changelink:hover {
+    background-color: #0284c7 !important;
+    color: white !important;
+}
+
+/* On enlève les anciens emojis pour faire plus propre */
+.addlink::before, .changelink::before { content: "" !important; }
+
+/* ACTIONS RÉCENTES (SIDEBAR) */
+#content-related {
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+}
+#content-related h2 {
+    background: #1e293b !important;
+    color: white !important;
+    padding: 15px 20px !important;
+    font-size: 0.95rem !important;
+    margin: 0 !important;
+    border-bottom: 2px solid var(--accent) !important;
+}
+#content-related h3 {
+    color: #64748b !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    padding: 15px 20px 5px 20px !important;
+    margin: 0 !important;
+}
+#content-related ul { padding: 0 20px 15px 20px !important; }
+#content-related li { font-size: 0.85rem !important; margin-bottom: 8px !important; color: #334155; }
+#content-related li a { color: #3b82f6 !important; font-weight: 600; }
+
+/* BOUTONS GLOBAUX */
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: #0f172a !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 10px 20px !important;
+    font-weight: 600 !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+}
+.button:hover, input[type=submit]:hover { background: #1e293b !important; }
+
+/* Formulaires */
+.form-row { padding: 12px 20px !important; border-bottom: 1px solid #e2e8f0 !important; }
+.form-row label { color: #334155 !important; font-weight: 600 !important; }
+input[type=text], input[type=password], textarea, select {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+}
+input:focus, textarea:focus, select:focus {
+    border-color: #0f172a !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(15,23,42,0.1) !important;
 }

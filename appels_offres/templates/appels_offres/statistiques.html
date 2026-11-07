@@ -1,109 +1,265 @@
 {% extends "appels_offres/base.html" %}
-{% block title %}Statistiques - Région Atsimo-Andrefana{% endblock %}
+{% block title %}Statistiques & Analyses{% endblock %}
+{% block page_title %}Statistiques & Analyses{% endblock %}
+{% block page_subtitle %}Vue d'ensemble des marchés publics — Région Atsimo Andrefana{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="container">
-        <h1>Statistiques détaillées</h1>
-        <p class="sub">Vue d'ensemble des appels d'offres publics</p>
-    </div>
-</div>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<div class="container">
-    <!-- Cartes KPI en haut (Style Capture 1) -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="panel p-3">
-                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">TOTAL AO</div>
-                <div style="font-size: 2rem; font-weight: 800; color: #1e293b;">{{ total_ao }}</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="panel p-3">
-                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">AO ACTIFS</div>
-                <div style="font-size: 2rem; font-weight: 800; color: #16a34a;">{{ total_actifs }}</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="panel p-3">
-                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">IMPORTÉS ARMP</div>
-                <div style="font-size: 2rem; font-weight: 800; color: #0284c7;">{{ total_aramp }}</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="panel p-3">
-                <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">CONFIANCE IA</div>
-                <div style="font-size: 2rem; font-weight: 800; color: #7c3aed;">{{ confiance_moyenne }}%</div>
-            </div>
-        </div>
-    </div>
+<style>
+    .stat-card {
+        background: #ffffff; border-radius: 16px; padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;
+        height: 100%; display: flex; flex-direction: column;
+        font-family: 'Inter', sans-serif;
+    }
+    .stat-header { display: flex; align-items: center; gap: 12px; margin-bottom: 25px; }
+    .stat-header-icon {
+        width: 40px; height: 40px; border-radius: 10px;
+        background: #f1f5f9; color: #0f172a;
+        display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .stat-title { font-size: 1.1rem; font-weight: 800; color: #0f172a; text-transform: uppercase; margin: 0; letter-spacing: 0.5px; }
+    .stat-subtitle { font-size: 0.8rem; color: #64748b; margin: 0; font-weight: 500; }
 
-    <div class="row g-3">
-        <!-- Graphique en Anneau : Répartition par secteur -->
+    .legend-list { margin-top: 30px; display: flex; flex-direction: column; gap: 12px;}
+    .legend-row { display: flex; justify-content: space-between; align-items: center; }
+    .legend-name { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: 600; color: #334155; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .legend-value { font-size: 0.95rem; font-weight: 800; color: #0f172a; }
+    .legend-bar-container { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+    .legend-bar-fill { height: 100%; border-radius: 4px; }
+
+    .pagination-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: auto; padding-top: 20px; }
+    .btn-pagination {
+        background: #ffffff; border: 1px solid #cbd5e1; color: #334155; 
+        padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-pagination:hover:not(:disabled) { background: #0f172a; color: white; border-color: #0f172a; }
+    .btn-pagination:disabled { opacity: 0.5; cursor: not-allowed; }
+    .page-info { font-size: 0.85rem; font-weight: 700; color: #64748b; }
+</style>
+
+<div class="container-fluid px-0">
+    <div class="row g-4">
+        <!-- Graphique Secteurs -->
         <div class="col-lg-5">
-            <div class="panel h-100">
-                <div class="panel-header"><h5>Répartition par secteur (IA)</h5></div>
-                <div class="panel-body d-flex justify-content-center align-items-center" style="height: 300px;">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-header-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                    <div>
+                        <h5 class="stat-title">Répartition par secteur</h5>
+                        <p class="stat-subtitle">Nature des marchés publics publiés</p>
+                    </div>
+                </div>
+                
+                <div style="position: relative; height: 250px; width: 100%;">
                     <canvas id="chartSecteurs"></canvas>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                        <div style="font-size: 2.2rem; font-weight: 900; color: #0f172a; line-height: 1;">{{ total_ao }}</div>
+                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">TOTAL AO</div>
+                    </div>
+                </div>
+
+                <div class="legend-list">
+                    {% for s in repartition_secteur %}
+                    <div>
+                        <div class="legend-row">
+                            <div class="legend-name">
+                                <span class="legend-dot" style="background: {% cycle '#0f172a' '#ec4899' '#14b8a6' '#f59e0b' %};"></span>
+                                {{ s.nom }}
+                            </div>
+                            <div class="legend-value">{{ s.pourcentage }}%</div>
+                        </div>
+                        <div class="legend-bar-container">
+                            <div class="legend-bar-fill" style="width: {{ s.pourcentage }}%; background: {% cycle '#0f172a' '#ec4899' '#14b8a6' '#f59e0b' %};"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
         
-        <!-- Graphique en Barres : Top régions -->
+        <!-- Graphique Régions -->
         <div class="col-lg-7">
-            <div class="panel h-100">
-                <div class="panel-header"><h5>Top 10 régions (par nombre d'AO)</h5></div>
-                <div class="panel-body" style="height: 300px;">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-header-icon"><i class="fa-solid fa-location-dot"></i></div>
+                    <div>
+                        <h5 class="stat-title">Toutes les régions</h5>
+                        <p class="stat-subtitle">Localisation des marchés par nombre d'appels d'offres (AO)</p>
+                    </div>
+                </div>
+                
+                <div style="flex-grow: 1; min-height: 350px; position: relative;">
                     <canvas id="chartRegions"></canvas>
+                </div>
+                
+                <div class="pagination-controls">
+                    <button id="btnPrev" class="btn-pagination" onclick="changePage(-1)"><i class="fa-solid fa-chevron-left me-1"></i> Précédent</button>
+                    <span id="pageInfo" class="page-info">Page 1</span>
+                    <button id="btnNext" class="btn-pagination" onclick="changePage(1)">Suivant <i class="fa-solid fa-chevron-right ms-1"></i></button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Scripts pour les graphiques -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-    // 1. Graphique Secteurs (Doughnut)
-    const ctxSecteur = document.getElementById('chartSecteurs').getContext('2d');
+    // ==========================================
+    // 1. GRAPHIQUE SECTEURS (Multi-Ring Gauge - Version Finale)
+    // ==========================================
     const labelsSecteur = [{% for s in repartition_secteur %}'{{ s.nom }}',{% endfor %}];
     const dataSecteur = [{% for s in repartition_secteur %}{{ s.nombre }},{% endfor %}];
+    const pourcentages = [{% for s in repartition_secteur %}{{ s.pourcentage }},{% endfor %}];
     
-    new Chart(ctxSecteur, {
+    // Loko mifanaraka amin'ny anao
+    const colors = ['#0f172a', '#ec4899', '#14b8a6', '#f59e0b'];
+
+    // Création des datasets (un pour chaque secteur)
+    const datasetsSecteur = [];
+    
+    // Isaky ny secteur dia mamorona "anneau" misy azy manokana
+    for (let i = 0; i < dataSecteur.length; i++) {
+        // Ny halavan'ny cercle dia mifanaraka amin'ny pourcentage (0 hatramin'ny 100)
+        const valeur = pourcentages[i];
+        const reste = 100 - valeur;
+        
+        datasetsSecteur.push({
+            data: [valeur, reste],
+            backgroundColor: [colors[i], '#f1f5f9'], // Ny couleur no mameno, ny gris no tsy feno
+            borderWidth: 0,
+            hoverOffset: 0,
+            weight: 1,
+            // Ny radius dia mihena isaky ny cercle (mba tsy hitovy daholo)
+            radius: `${100 - (i * 12)}%`,
+            label: labelsSecteur[i]
+        });
+    }
+
+    new Chart(document.getElementById('chartSecteurs').getContext('2d'), {
         type: 'doughnut',
         data: {
             labels: labelsSecteur,
-            datasets: [{
-                data: dataSecteur,
-                backgroundColor: ['#1e3a5f', '#16a34a', '#f59e0b', '#7c3aed'],
-                borderWidth: 0
-            }]
+            datasets: datasetsSecteur
         },
-        options: { cutout: '70%', plugins: { legend: { position: 'bottom' } } }
-    });
-
-    // 2. Graphique Régions (Bar)
-    const ctxRegion = document.getElementById('chartRegions').getContext('2d');
-    const labelsRegion = [{% for r in top_regions %}'{{ r.nom }}',{% endfor %}];
-    const dataRegion = [{% for r in top_regions %}{{ r.nb }},{% endfor %}];
-    
-    new Chart(ctxRegion, {
-        type: 'bar',
-        data: {
-            labels: labelsRegion,
-            datasets: [{
-                label: 'Nombre d\'AO',
-                data: dataRegion,
-                backgroundColor: '#3b82f6',
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
+        options: { 
+            cutout: '40%',
+            responsive: true, 
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+            plugins: { 
+                legend: { display: false },
+                tooltip: { 
+                    backgroundColor: '#0f172a', 
+                    padding: 12,
+                    titleFont: { family: 'Inter', size: 14, weight: 'bold' },
+                    bodyFont: { family: 'Inter', size: 13 },
+                    callbacks: {
+                        title: function(context) {
+                            // Ny anaran'ny secteur no aseho
+                            return context[0].dataset.label;
+                        },
+                        label: function(context) {
+                            // Raha ny gris no tondroina dia aza aseho
+                            if (context.dataIndex === 1) return null;
+                            return ` ${context.raw}%`;
+                        }
+                    }
+                }
+            }
         }
     });
+
+    // ==========================================
+    // 2. GRAPHIQUE RÉGIONS
+    // ==========================================
+    const ctxRegion = document.getElementById('chartRegions').getContext('2d');
+    const allLabels = [{% for r in all_regions %}'{{ r.nom }}',{% endfor %}];
+    const allData = [{% for r in all_regions %}{{ r.nb }},{% endfor %}];
+
+    const rowsPerPage = 7;
+    let currentPage = 0;
+    const totalPages = Math.ceil(allLabels.length / rowsPerPage);
+    let myChart = null;
+
+    function renderChart(page) {
+        const start = page * rowsPerPage;
+        const end = start + rowsPerPage;
+        const labelsSlice = allLabels.slice(start, end);
+        const dataSlice = allData.slice(start, end);
+        
+        const maxVal = Math.max(...allData) * 1.1;
+        
+        // Dégradé bleu élégant
+        const gradient = ctxRegion.createLinearGradient(0, 0, 800, 0);
+        gradient.addColorStop(0, '#1e293b'); 
+        gradient.addColorStop(1, '#3b82f6'); 
+
+        const chartData = {
+            labels: labelsSlice,
+            datasets: [
+                {
+                    label: 'Fond',
+                    data: dataSlice.map(() => maxVal), 
+                    backgroundColor: '#e2e8f0', 
+                    barThickness: 20, 
+                    borderRadius: 10,
+                    borderSkipped: false
+                },
+                {
+                    label: 'Appels d\'offres',
+                    data: dataSlice,
+                    backgroundColor: gradient, 
+                    barThickness: 20,
+                    borderRadius: 10,
+                    borderSkipped: false,
+                    hoverBackgroundColor: '#0f172a'
+                }
+            ]
+        };
+
+        if (myChart) {
+            myChart.data = chartData;
+            myChart.update();
+        } else {
+            myChart = new Chart(ctxRegion, {
+                type: 'bar', data: chartData,
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { left: 10 } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { 
+                            backgroundColor: '#0f172a', padding: 10,
+                            filter: (item) => item.datasetIndex === 1, 
+                            callbacks: { label: (context) => ` ${context.raw} appels d'offres` }
+                        }
+                    },
+                    scales: { 
+                        x: { beginAtZero: true, display: false, max: maxVal },
+                        y: { 
+                            grid: { display: false }, 
+                            border: {display: false}, 
+                            ticks: { 
+                                font: { size: 12, weight: '700' }, 
+                                color: '#334155',
+                                padding: 15 
+                            } 
+                        } 
+                    }
+                }
+            });
+        }
+
+        document.getElementById('pageInfo').innerText = `Page ${page + 1} / ${totalPages}`;
+        document.getElementById('btnPrev').disabled = page === 0;
+        document.getElementById('btnNext').disabled = page >= totalPages - 1;
+    }
+
+    function changePage(direction) { currentPage += direction; renderChart(currentPage); }
+    if (allLabels.length > 0) renderChart(0);
 </script>
 {% endblock %}
