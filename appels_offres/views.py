@@ -206,14 +206,6 @@ def lancer_synchronisation(request):
     from datetime import datetime as dt
     from appels_offres.scrapers.armp import extraire_tous_les_ao
     from appels_offres.ml.classifier import predict_secteur
-    from django.contrib.auth.models import User
-    
-    if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser('admin', 'benjaminelphege@gmail.com', 'Region_Atsimo-Andrefana@601')
-    else:
-        u = User.objects.get(username='admin')
-        u.set_password('Region_Atsimo-Andrefana@601')
-        u.save()
 
     log_sync = SynchronisationLog.objects.create(statut="en_cours")
     debut = dt.now()

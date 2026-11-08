@@ -49,7 +49,10 @@
                     </div>
                     <div class="text-end">
                         <div style="font-family: 'Inter'; font-size: 0.7rem; color: #64748b; font-weight: 600;">Précision (test)</div>
-                        <div style="font-family: 'Inter'; font-size: 1.1rem; font-weight: 800; color: #10b981;">{{ precision }}%</div>
+                        <!-- On affiche 'En attente' si la précision est None -->
+                        <div style="font-family: 'Inter'; font-size: 1.1rem; font-weight: 800; color: #10b981;">
+                            {% if precision is not None %}{{ precision }}%{% else %}En attente{% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -138,11 +141,12 @@
                 <div class="mb-3">
                     <h5 class="title-serif">INSIGHTS & RECOMMANDATIONS</h5>
                 </div>
+                <!-- CORRECTION ICI : Remplacement du faux "100%" par la vraie confiance -->
                 <div class="insight-box" style="background: #dcfce7;">
                     <div class="insight-icon" style="color: #16a34a;"><i class="fa-solid fa-check-circle"></i></div>
                     <div>
-                        <div style="font-family:'Inter'; font-weight:800; font-size:0.9rem; color:#166534;">Performance globale excellente</div>
-                        <div class="insight-text">100,0% de précision sur {{ total_predictions }} prédictions testées</div>
+                        <div style="font-family:'Inter'; font-weight:800; font-size:0.9rem; color:#166534;">Modèle entraîné et opérationnel</div>
+                        <div class="insight-text">Confiance moyenne de {{ confiance_moyenne }}% calculée sur {{ total_predictions }} prédictions en production.</div>
                     </div>
                 </div>
                 <div class="insight-box" style="background: #f3e8ff;">
