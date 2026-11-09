@@ -1,7 +1,7 @@
 """
 Django settings for config project — Région Atsimo-Andrefana.
 """
-
+import sys
 import os
 from pathlib import Path
 import dj_database_url
@@ -86,12 +86,22 @@ WSGI_APPLICATION = "config.wsgi.application"
 # BASE DE DONNÉES
 # ============================================================
 
-DATABASES = {
-    "default": dj_database_url.parse(
-        os.environ.get("DATABASE_URL", "sqlite:///db.sqlite3"),
-        conn_max_age=600,
-    )
-}
+if 'test' in sys.argv:
+    # Si on lance des tests, on utilise SQLite en mémoire (rapide, local, pas de conflit avec Neon)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
+    }
+else:
+    # Pour le développement local et la production (Render), on utilise Neon
+    DATABASES = {
+        "default": dj_database_url.parse(
+            os.environ.get("DATABASE_URL", "sqlite:///db.sqlite3"),
+            conn_max_age=600,
+        )
+    }
 
 
 # ============================================================
