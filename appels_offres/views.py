@@ -1,4 +1,7 @@
+import json
+from collections import Counter
 from datetime import date, timedelta
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Sum, Count, Avg
 from django.http import JsonResponse
@@ -6,7 +9,7 @@ from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.utils import timezone
-from collections import Counter
+
 from .models import (
     AppelOffre, TypeProcedure, District, Region, Secteur,
     ClassificationLog, SynchronisationLog,
@@ -23,10 +26,9 @@ def dashboard(request):
     echeances_proches = appels.filter(date_limite__gte=aujourd_hui, date_limite__lte=dans_7_jours).count()
     total_aramp = appels.filter(source="ARMP").count()
 
-    logs = ClassificationLog.objects.all()
-    confiance_moyenne = 0.0
-    if logs.exists():
-        confiance_moyenne = round(sum(l.confiance for l in logs) / logs.count() * 100, 1)
+    # Optimisation : calcul de la confiance avec Avg (une seule requête)
+    moyenne = ClassificationLog.objects.aggregate(m=Avg("confiance"))["m"]
+    confiance_moyenne = round(moyenne * 100, 1) if moyenne is not None else 0.0
 
     repartition_secteur = []
     for s in Secteur.objects.all():
@@ -80,10 +82,9 @@ def statistiques(request):
         if nb > 0:
             repartition_secteur.append({"nom": s.nom, "nombre": nb, "pourcentage": round(nb/total_ao*100, 1) if total_ao > 0 else 0})
 
-    logs = ClassificationLog.objects.all()
-    confiance_moyenne = 0.0
-    if logs.exists():
-        confiance_moyenne = round(sum(l.confiance for l in logs) / logs.count() * 100, 1)
+    # Optimisation : calcul de la confiance avec Avg
+    moyenne = ClassificationLog.objects.aggregate(m=Avg("confiance"))["m"]
+    confiance_moyenne = round(moyenne * 100, 1) if moyenne is not None else 0.0
 
     contexte = {
         "total_ao": total_ao,
@@ -142,35 +143,111 @@ def corriger_prediction(request, classification_id):
     return redirect("appels_offres:detail_appel", pk=log.appel_offre.pk)
 
 def performance_ia(request):
-    toutes = ClassificationLog.objects.select_related("secteur_predit", "secteur_reel", "appel_offre")
-    total_predictions = toutes.count()
-    verifiees = toutes.filter(secteur_reel__isnull=False)
-    total_verifiees = verifiees.count()
-    correctes = sum(1 for log in verifiees if log.secteur_predit_id == log.secteur_reel_id)
-    precision = round((correctes / total_verifiees) * 100, 1) if total_verifiees > 0 else None
+    # Confiance moyenne : une seule requête
+    moyenne = ClassificationLog.objects.aggregate(m=Avg("confiance"))["m"]
+    confiance_moyenne = round(moyenne * 100, 1) if moyenne is not None else None
+    total_predictions = ClassificationLog.objects.count()
 
-    # Création d'une vraie matrice 2D propre pour le template
+    # Paires (secteur réel, secteur prédit) des prédictions vérifiées à la main
     secteurs_list = list(Secteur.objects.all().order_by("nom"))
+    paires = Counter(
+        ClassificationLog.objects
+        .filter(secteur_reel__isnull=False, secteur_predit__isnull=False)
+        .values_list("secteur_reel_id", "secteur_predit_id")
+    )
+    total_verifiees = sum(paires.values())
+    correctes = sum(nb for (reel, predit), nb in paires.items() if reel == predit)
+    precision = round(correctes / total_verifiees * 100, 1) if total_verifiees else None
+
+    # Matrice de confusion (lignes = réel, colonnes = prédit)
     matrice_data = []
     for s_reel in secteurs_list:
-        ligne = {"nom": s_reel.nom, "valeurs": []}
-        for s_predit in secteurs_list:
-            nb = verifiees.filter(secteur_reel=s_reel, secteur_predit=s_predit).count()
-            ligne["valeurs"].append(nb)
-        matrice_data.append(ligne)
+        valeurs = [paires.get((s_reel.id, s_pred.id), 0) for s_pred in secteurs_list]
+        matrice_data.append({"nom": s_reel.nom, "valeurs": valeurs})
 
-    confiance_moyenne = None
-    if total_predictions > 0:
-        confiance_moyenne = round(sum(log.confiance for log in toutes) / total_predictions * 100, 1)
+    # Rappel et précision par secteur
+    stats_secteurs = []
+    for i, secteur in enumerate(secteurs_list):
+        vrais_positifs = matrice_data[i]["valeurs"][i]
+        support = sum(matrice_data[i]["valeurs"])
+        predits = sum(ligne["valeurs"][i] for ligne in matrice_data)
+        stats_secteurs.append({
+            "nom": secteur.nom,
+            "support": support,
+            "rappel": round(vrais_positifs / support * 100, 1) if support else None,
+            "precision": round(vrais_positifs / predits * 100, 1) if predits else None,
+            "fiable": support >= 5,
+        })
+
+    # Données du radar, dans le même ordre que les libellés (secteurs_list)
+    radar_rappel = json.dumps([st["rappel"] or 0 for st in stats_secteurs])
+    radar_precision = json.dumps([st["precision"] or 0 for st in stats_secteurs])
+
+    # Messages calculés, jamais écrits à la main
+    insights = []
+    if precision is None:
+        insights.append({
+            "type": "info",
+            "titre": "Précision réelle en attente",
+            "texte": "Aucune prédiction n'a été vérifiée manuellement. La confiance moyenne "
+                     "mesure l'assurance du modèle, pas son exactitude.",
+        })
+    else:
+        if confiance_moyenne is not None and confiance_moyenne - precision > 10:
+            insights.append({
+                "type": "warning",
+                "titre": "Confiance supérieure à la précision réelle",
+                "texte": f"Confiance moyenne de {confiance_moyenne} % contre {precision} % de "
+                         f"prédictions correctes sur {total_verifiees} vérifiées : le modèle est "
+                         f"plus sûr de lui qu'il n'est exact.",
+            })
+        else:
+            insights.append({
+                "type": "success",
+                "titre": "Confiance cohérente avec la précision",
+                "texte": f"{precision} % de prédictions correctes sur {total_verifiees} vérifiées.",
+            })
+
+        fiables = [st for st in stats_secteurs if st["fiable"] and st["rappel"] is not None]
+        if fiables:
+            meilleur = max(fiables, key=lambda st: st["rappel"])
+            pire = min(fiables, key=lambda st: st["rappel"])
+            insights.append({
+                "type": "info",
+                "titre": "Rappel par secteur",
+                "texte": f"Meilleur rappel : {meilleur['nom']} ({meilleur['rappel']} %). "
+                         f"Plus faible : {pire['nom']} ({pire['rappel']} %).",
+            })
+
+        rares = [st["nom"] for st in stats_secteurs if not st["fiable"]]
+        if rares:
+            insights.append({
+                "type": "warning",
+                "titre": "Échantillon insuffisant",
+                "texte": "Moins de 5 exemples vérifiés pour : " + ", ".join(rares)
+                         + ". Leurs taux ne sont pas interprétables.",
+            })
+
+        if total_verifiees < 100:
+            insights.append({
+                "type": "info",
+                "titre": "Échantillon réduit",
+                "texte": f"{total_verifiees} vérifications seulement : résultats indicatifs, "
+                         f"marge d'erreur élevée.",
+            })
 
     return render(request, "appels_offres/performance_ia.html", {
-        "total_predictions": total_predictions, 
+        "total_predictions": total_predictions,
         "total_verifiees": total_verifiees,
-        "correctes": correctes, 
-        "precision": precision, 
+        "correctes": correctes,
+        "precision": precision,
         "confiance_moyenne": confiance_moyenne,
         "secteurs_list": secteurs_list,
         "matrice_data": matrice_data,
+        "stats_secteurs": stats_secteurs,
+        "radar_rappel": radar_rappel,
+        "radar_precision": radar_precision,
+        "insights": insights,
     })
 
 def carte(request):

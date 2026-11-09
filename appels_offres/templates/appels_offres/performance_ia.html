@@ -16,21 +16,23 @@
     .title-serif { font-family: 'Playfair Display', serif; color: #0f172a; font-size: 1.1rem; font-weight: 700; margin: 0; }
     .subtitle-sans { font-family: 'Inter', sans-serif; color: #64748b; font-size: 0.75rem; margin: 0; }
     
-    /* Matrice de confusion */
     .confusion-table { width: 100%; border-collapse: collapse; font-family: 'Inter'; font-size: 0.8rem; text-align: center; }
     .confusion-table th { background: #f8fafc; color: #64748b; font-weight: 600; padding: 10px; border: 1px solid #e2e8f0; }
     .confusion-table td { padding: 8px; border: 1px solid #e2e8f0; font-weight: 600; }
     .cell-green { background: #10b981; color: white; }
     .cell-empty { background: #f8fafc; color: #94a3b8; }
 
-    /* Insights */
     .insight-box { border-radius: 8px; padding: 12px 15px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
     .insight-icon { font-size: 1.2rem; margin-top: 2px; }
     .insight-text { font-family: 'Inter'; font-size: 0.8rem; color: #1e293b; }
+    
+    /* Couleurs dynamiques pour les insights */
+    .insight-success { background: #dcfce7; }
+    .insight-warning { background: #ffedd5; }
+    .insight-info { background: #e0f2fe; }
 </style>
 
 <div class="container-fluid px-0">
-    <!-- Ligne 1 : Jauge, Radar, Taux de rappel -->
     <div class="row g-3 mb-3">
         <!-- Jauge de fiabilité -->
         <div class="col-lg-4">
@@ -49,7 +51,6 @@
                     </div>
                     <div class="text-end">
                         <div style="font-family: 'Inter'; font-size: 0.7rem; color: #64748b; font-weight: 600;">Précision (test)</div>
-                        <!-- On affiche 'En attente' si la précision est None -->
                         <div style="font-family: 'Inter'; font-size: 1.1rem; font-weight: 800; color: #10b981;">
                             {% if precision is not None %}{{ precision }}%{% else %}En attente{% endif %}
                         </div>
@@ -71,37 +72,36 @@
             </div>
         </div>
 
-        <!-- Taux de rappel -->
+        <!-- Taux de rappel DYNAMIQUE -->
         <div class="col-lg-4">
             <div class="card-custom">
                 <div class="mb-3">
                     <h5 class="title-serif">TAUX DE RAPPEL PAR SECTEUR</h5>
                 </div>
                 <div class="d-flex flex-column gap-3">
+                    {% for stat in stats_secteurs %}
                     <div>
-                        <div class="d-flex justify-content-between mb-1"><span style="font-family:'Inter'; font-weight:600; font-size:0.85rem;">Travaux</span><span style="font-family:'Inter'; font-weight:800; color:#10b981;">95,7%</span></div>
-                        <div style="height: 8px; background: #e2e8f0; border-radius: 4px;"><div style="width: 95.7%; background: #10b981; height: 100%; border-radius: 4px;"></div></div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span style="font-family:'Inter'; font-weight:600; font-size:0.85rem;">
+                                {{ stat.nom }} 
+                                {% if not stat.fiable %}<span style="color:#94a3b8; font-size:0.7rem;">(n<5)</span>{% endif %}
+                            </span>
+                            <span style="font-family:'Inter'; font-weight:800; color:{% if not stat.fiable %}#94a3b8{% elif stat.rappel < 50 %}#f59e0b{% else %}#10b981{% endif %};">
+                                {% if stat.rappel is not None %}{{ stat.rappel }}%{% else %}—{% endif %}
+                            </span>
+                        </div>
+                        <div style="height: 8px; background: #e2e8f0; border-radius: 4px;">
+                            <div style="width: {% if stat.rappel is not None %}{{ stat.rappel }}{% else %}0{% endif %}%; background: {% if not stat.fiable %}#cbd5e1{% elif stat.rappel < 50 %}#f59e0b{% else %}#10b981{% endif %}; height: 100%; border-radius: 4px;"></div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="d-flex justify-content-between mb-1"><span style="font-family:'Inter'; font-weight:600; font-size:0.85rem;">Fournitures</span><span style="font-family:'Inter'; font-weight:800; color:#10b981;">96,2%</span></div>
-                        <div style="height: 8px; background: #e2e8f0; border-radius: 4px;"><div style="width: 96.2%; background: #10b981; height: 100%; border-radius: 4px;"></div></div>
-                    </div>
-                    <div>
-                        <div class="d-flex justify-content-between mb-1"><span style="font-family:'Inter'; font-weight:600; font-size:0.85rem;">Services</span><span style="font-family:'Inter'; font-weight:800; color:#10b981;">95,9%</span></div>
-                        <div style="height: 8px; background: #e2e8f0; border-radius: 4px;"><div style="width: 95.9%; background: #10b981; height: 100%; border-radius: 4px;"></div></div>
-                    </div>
-                    <div>
-                        <div class="d-flex justify-content-between mb-1"><span style="font-family:'Inter'; font-weight:600; font-size:0.85rem;">Prestations</span><span style="font-family:'Inter'; font-weight:800; color:#8b5cf6;">68,8%</span></div>
-                        <div style="height: 8px; background: #e2e8f0; border-radius: 4px;"><div style="width: 68.8%; background: #8b5cf6; height: 100%; border-radius: 4px;"></div></div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Ligne 2 : Matrice et Recommandations -->
+    <!-- Matrice et Recommandations -->
     <div class="row g-3">
-        <!-- Matrice de Confusion -->
         <div class="col-lg-6">
             <div class="card-custom">
                 <div class="mb-3">
@@ -129,40 +129,29 @@
                         {% endfor %}
                     </tbody>
                 </table>
-                <div class="mt-3 text-center" style="font-family: 'Inter'; font-size: 0.7rem; color: #64748b;">
-                    Valeur = nombre de prédictions + La diagonale représente les prédictions correctes
-                </div>
             </div>
         </div>
 
-        <!-- Insights & Recommandations -->
+        <!-- Insights Dynamiques -->
         <div class="col-lg-6">
             <div class="card-custom">
                 <div class="mb-3">
                     <h5 class="title-serif">INSIGHTS & RECOMMANDATIONS</h5>
                 </div>
-                <!-- CORRECTION ICI : Remplacement du faux "100%" par la vraie confiance -->
-                <div class="insight-box" style="background: #dcfce7;">
-                    <div class="insight-icon" style="color: #16a34a;"><i class="fa-solid fa-check-circle"></i></div>
+                
+                {% for insight in insights %}
+                <div class="insight-box insight-{{ insight.type }}">
+                    <div class="insight-icon" style="color: {% if insight.type == 'success' %}#16a34a{% elif insight.type == 'warning' %}#ea580c{% else %}#0284c7{% endif %};">
+                        <i class="fa-solid {% if insight.type == 'success' %}fa-check-circle{% elif insight.type == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+                    </div>
                     <div>
-                        <div style="font-family:'Inter'; font-weight:800; font-size:0.9rem; color:#166534;">Modèle entraîné et opérationnel</div>
-                        <div class="insight-text">Confiance moyenne de {{ confiance_moyenne }}% calculée sur {{ total_predictions }} prédictions en production.</div>
+                        <div style="font-family:'Inter'; font-weight:800; font-size:0.9rem; color:{% if insight.type == 'success' %}#166534{% elif insight.type == 'warning' %}#9a3412{% else %}#0369a1{% endif %};">
+                            {{ insight.titre }}
+                        </div>
+                        <div class="insight-text">{{ insight.texte }}</div>
                     </div>
                 </div>
-                <div class="insight-box" style="background: #f3e8ff;">
-                    <div class="insight-icon" style="color: #9333ea;"><i class="fa-solid fa-chart-bar"></i></div>
-                    <div>
-                        <div style="font-family:'Inter'; font-weight:800; font-size:0.9rem; color:#6b21a8;">Taux de rappel élevés</div>
-                        <div class="insight-text">Travaux (95,7%), Fournitures (96,2%) et Services (95,9%) sont très bien détectés</div>
-                    </div>
-                </div>
-                <div class="insight-box" style="background: #ffedd5;">
-                    <div class="insight-icon" style="color: #ea580c;"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                    <div>
-                        <div style="font-family:'Inter'; font-weight:800; font-size:0.9rem; color:#9a3412;">Point d'amélioration</div>
-                        <div class="insight-text">Le secteur "Prestations" est à 68,8% de rappel, avec une représentation de seulement 3,3% dans les données.</div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -177,14 +166,22 @@
         options: { cutout: '80%', plugins: { tooltip: { enabled: false } }, maintainAspectRatio: false }
     });
 
-    // Radar Chart
+    // Radar Chart Dynamique (utilise les JSON injectés par Django)
     new Chart(document.getElementById('radarChart').getContext('2d'), {
         type: 'radar',
         data: {
             labels: [{% for s in secteurs_list %}'{{ s.nom }}',{% endfor %}],
             datasets: [
-                { label: 'Rappel (%)', data: [95.7, 96.2, 95.9, 68.8], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.2)', pointBackgroundColor: '#10b981', borderWidth: 2 },
-                { label: 'Précision (%)', data: [91.6, 91.6, 91.6, 91.6], borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.2)', pointBackgroundColor: '#8b5cf6', borderWidth: 2 }
+                { 
+                    label: 'Rappel (%)', 
+                    data: {{ radar_rappel|safe }}, 
+                    borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.2)', pointBackgroundColor: '#10b981', borderWidth: 2 
+                },
+                { 
+                    label: 'Précision (%)', 
+                    data: {{ radar_precision|safe }}, 
+                    borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.2)', pointBackgroundColor: '#8b5cf6', borderWidth: 2 
+                }
             ]
         },
         options: { responsive: true, maintainAspectRatio: false, scales: { r: { angleLines: { color: '#e2e8f0' }, grid: { color: '#e2e8f0' }, pointLabels: { font: { size: 11, weight: '600' }, color: '#475569' }, ticks: { display: false, min: 0, max: 100 } } }, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: {size: 10} } } } }
